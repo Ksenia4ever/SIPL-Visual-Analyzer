@@ -10,8 +10,12 @@
 //
 // Conditions:
 // equality, greater-than, logical OR, logical NOT.
+//
+// Arithmetic operator tokens are preserved
+// for conversion to typed AST nodes.
 
 start: "begin" statement "end"
+
 
 // Statements
 
@@ -51,14 +55,21 @@ COMPARATOR: "=" | ">"
 
 ?expression: sum
 
-?sum: product (("+" | "-") product)* -> sum_expr
+?sum: product (ADD_OP product)* -> sum_expr
 
-?product: unary ("*" unary)* -> product_expr
+?product: unary (MUL_OP unary)* -> product_expr
 
 ?unary: "-" unary -> negative
       | NUMBER -> number
       | NAME -> variable
       | "(" expression ")" -> grouped_expression
+
+
+// Arithmetic terminals
+
+ADD_OP: "+" | "-"
+
+MUL_OP: "*"
 
 
 // Lexical rules
