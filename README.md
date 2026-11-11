@@ -33,7 +33,7 @@ project. This table is not a completion claim.
 
 ## Current Status
 
-Stage 1: Project initialization.
+Stage 1: Project initialization completed.
 
 Currently implemented:
 
@@ -78,19 +78,19 @@ SIPL-Visual-Analyzer/
 ### Prerequisites
 
 - Python 3.11 or newer
-- Git
+- Git (optional)
 
-### 1. Clone the repository
+### 1. Download the project
 
-```powershell
-git clone <YOUR_REPOSITORY_URL>
-cd SIPL-Visual-Analyzer
-```
+Download the repository as a ZIP archive from GitHub
+using Code > Download ZIP.
 
-Replace `<YOUR_REPOSITORY_URL>` with the actual repository
-URL after publication.
+Extract the archive and open the project folder
+in Visual Studio Code.
 
 ### 2. Create a virtual environment
+
+Open PowerShell in the project directory:
 
 ```powershell
 py -m venv .venv
