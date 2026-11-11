@@ -14,7 +14,7 @@ def test_cli_info(capsys):
     assert exit_code == 0
     assert "SIPL Visual Analyzer" in captured.out
     assert __version__ in captured.out
-    assert "Status: Project initialization" in captured.out
+    assert "Status: CLI available" in captured.out
 
 
 def test_cli_help(capsys):

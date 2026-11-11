@@ -1,43 +1,50 @@
 # Changelog
 
 All notable changes to SIPL Visual Analyzer
-will be documented here.
+are documented in this file.
 
 ## [Unreleased]
 
 ### Added
 
-- CORE-01 formal SIPL grammar
-- Machine-readable grammar using Lark
-- Syntax validation and diagnostics
+- CORE-01: Formal SIPL grammar
+- Lexical specification
 - Positive and negative grammar tests
-- Valid and invalid SIPL examples
-- CORE-02 typed AST model
-- SourceSpan for AST nodes
-- Recursive Lark-to-AST conversion
+- CORE-02: Typed AST with SourceSpan
+- Lark-to-AST conversion
 - AST parser tests
-- CORE-03 interpreter
+- CORE-03: SIPL interpreter
 - Variable state management
-- Arithmetic expression evaluation
-- Boolean condition evaluation
-- Assignment and sequential execution
-- If/then/else execution
-- While loop execution
-- Begin/end and skip execution
+- Assignment, sequence and loop execution
+- Conditional and Boolean evaluation
+- Runtime diagnostics
 - Execution step limits
-- Undefined variable diagnostics
-- Runtime error handling
-- Interpreter tests and coverage verification
-- Interpreter demonstration example
-- Updated technical documentation
+- Interpreter tests
+- CORE-05: Full command-line interface
+- CLI check command
+- CLI parse command
+- CLI run command
+- CLI trace command
+- Structured JSON response format
+- CLI exit code contract
+- Initial variable arguments
+- Configurable execution step limit
+- Source-linked execution events
+- CLI integration tests
+- CLI and JSON documentation
+
+### Changed
+
+- Extended the original basic CLI
+- Updated CLI information status
+- Updated README and technical documentation
 
 ### Planned
 
-- Full CLI and JSON interface
-- Parse tree visualization
-- AST visualization
-- Semantic term generation
-- GitHub Release
+- VIS-01: Parse tree visualization
+- VIS-02: AST visualization
+- SEM-01: Formal semantic terms
+- REL-02: Tagged GitHub Release
 
 ## [0.1.0] - 2026-11-11
 
@@ -48,4 +55,4 @@ will be documented here.
 - Basic CLI with info and version commands
 - Initial automated CLI tests
 - Initial SIPL example
-- Project documentation structure
+- Documentation structure

@@ -1,316 +1,244 @@
-# SIPL Formal Grammar
+# SIPL Visual Analyzer — Technical Documentation
 
-## 1. Purpose
+## 1. Architecture
 
-This document describes the formal syntax and lexical
-rules of the SIPL (Simple Programming Language).
+The project uses a modular architecture:
 
-The implementation follows the SIPL language used in
-the Theory of Programming course.
+```text
+SIPL source file
+      |
+      v
+  Lark grammar
+      |
+      v
+ Concrete parse tree
+      |
+      v
+   Typed AST
+      |
+      +----------------+
+      |                |
+      v                v
+  Interpreter      AST serializer
+      |                |
+      v                v
+ State / Steps      JSON / Text
+      |
+      v
+  Trace events
+      |
+      v
+   CLI / JSON
+```
 
-The executable grammar is stored in:
-
+The source grammar is located in:
 `src/sipl/grammar.lark`
 
-The grammar is implemented using Lark.
+The typed AST is located in:
+`src/sipl/ast.py`
 
-## 2. Language Overview
+The interpreter is located in:
+`src/sipl/interpreter/runtime.py`
 
-SIPL is a simplified imperative programming language.
+The tracing adapter is located in:
+`src/sipl/interpreter/tracing.py`
 
-It supports:
+The CLI is located in:
+`src/sipl/cli.py`
 
-- Integer variables and constants
-- Arithmetic expressions
-- Assignment
-- Sequential composition
-- Conditional statements
-- While loops
-- Begin/end blocks
-- Skip statements
+## 2. Implemented Modules
 
-SIPL does not provide input/output statements,
-procedures, or complex data types in its basic version.
+### CORE-01
 
-## 3. Course BNF
+Formal SIPL grammar, lexical rules, positive
+and negative syntax tests.
 
-The basic program structure is:
+### CORE-02
 
-```text
-<program> ::= begin <statement> end
+Typed AST created from Lark's concrete parse tree.
+
+Every AST node includes SourceSpan information.
+
+### CORE-03
+
+SIPL interpreter supporting assignment, sequence,
+if, while, begin/end, skip, arithmetic expressions
+and Boolean conditions.
+
+Runtime errors include source coordinates.
+
+An execution step limit prevents unlimited loops.
+
+### CORE-05
+
+Command-line interface with:
+
+- check
+- parse
+- run
+- trace
+
+Commands support text output and structured JSON.
+
+## 3. CLI Architecture
+
+CLI arguments are processed using argparse.
+
+The CLI reads a SIPL file, parses it into a
+typed AST and invokes the corresponding service.
+
+The CLI does not contain a separate SIPL parser
+or interpreter.
+
+## 4. JSON Contract
+
+The current schema version is 1.0.
+
+All JSON command responses use:
+
+```json
+{
+  "schema_version": "1.0",
+  "command": "check",
+  "ok": true,
+  "data": {
+    "valid": true
+  },
+  "error": null
+}
 ```
 
-Statements:
-
-```text
-<statement> ::=
-      <variable> := <expression>
-    | <statement> ; <statement>
-    | if <condition> then <statement>
-      else <statement>
-    | while <condition> do <statement>
-    | begin <statement> end
-    | skip
-```
+When a command fails:
 
-Arithmetic expressions:
+- ok is false
+- data is null
+- error is an object
 
-```text
-<expression> ::=
-      <number>
-    | <variable>
-    | <expression> + <expression>
-    | <expression> - <expression>
-    | <expression> * <expression>
-    | ( <expression> )
-```
+Error objects contain:
 
-Conditions:
+- code
+- message
+- line
+- column
 
-```text
-<condition> ::=
-      <expression> = <expression>
-    | <expression> > <expression>
-    | <condition> ∨ <condition>
-    | ¬ <condition>
-    | ( <condition> )
-```
+For file errors, line and column are null.
 
-## 4. Lexical Specification
+JSON field order is not semantically significant.
 
-### Identifiers
+## 5. AST Serialization
 
-An identifier starts with a Latin letter.
+The parse command recursively serializes
+custom Python dataclasses.
 
-It can contain:
+Each AST node contains:
 
-- Latin letters
-- Digits
-- Underscores
+- node_type
+- span
+- node-specific attributes
 
-Examples:
+SourceSpan contains:
 
-```text
-X
-Y
-Result
-counter1
-total_sum
-```
+- start_line
+- start_column
+- end_line
+- end_column
+- start_pos
+- end_pos
 
-Identifiers are case-sensitive.
+Line and column coordinates are 1-based.
 
-The following words are reserved for language constructs:
+Character offsets are 0-based, with exclusive ends.
 
-```text
-begin
-end
-if
-then
-else
-while
-do
-skip
-```
+The JSON serializer does not expose raw Lark objects.
 
-### Integer constants
+## 6. Execution State
 
-Non-negative integer constants are represented by
-sequences of decimal digits.
+The run command returns:
 
-Negative integer values use unary minus.
+- state: final variable values
+- steps: execution step count
 
-Examples:
+Initial variables may be supplied using:
 
-```text
-0
-5
-123
--7
-```
+--state NAME=INTEGER
 
-### Assignment
+The option can be repeated for different variables.
 
-The assignment operator is:
+## 7. Trace Contract
 
-```text
-:=
-```
+The trace command uses TracingInterpreter,
+which extends the shared Interpreter class.
 
-Example:
+Execution events contain:
 
-```text
-X := 5
-```
+- event_id
+- type
+- step
+- line
+- column
+- state
 
-### Arithmetic operators
+Additional fields depend on event type.
 
-```text
-+
--
-*
-```
+Supported event types:
 
-Division is not included in the basic SIPL grammar.
+- before_statement
+- step
+- condition_evaluated
+- variable_changed
+- after_statement
+- completed
 
-### Comparison operators
+variable_changed also includes:
 
-```text
-=
->
-```
+- name
+- old_value
+- new_value
 
-Other comparison operators are not supported by
-this implementation.
+condition_evaluated also includes:
 
-### Logical operators
+- result
 
-```text
-∨
-¬
-```
+The trace follows actual program execution.
+It is not generated from a static example.
 
-The OR operator is represented by the Unicode symbol
-U+2228.
+A trace result is returned only after successful
+execution. Runtime errors produce an error response.
 
-The NOT operator is represented by the Unicode symbol
-U+00AC.
+## 8. Exit Codes
 
-### Delimiters
+0: Success
 
-```text
-;
-(
-)
-```
+1: SIPL syntax error
 
-Whitespace and line breaks are ignored where
-permitted by the grammar.
+2: CLI argument error
 
-Comments are not part of the implemented SIPL syntax.
+3: SIPL runtime error
 
-## 5. Parsing and Precedence
+4: File reading error
 
-The original course BNF is a theoretical description
-that can be ambiguous for some expressions and nested
-statements.
+Unknown commands and malformed options are handled
+by argparse and produce exit code 2.
 
-The executable Lark grammar fixes parsing conventions.
+## 9. Testing
 
-Arithmetic precedence:
+Unit tests cover grammar parsing, AST and execution.
 
-1. Parentheses
-2. Unary minus
-3. Multiplication
-4. Addition and subtraction
+Integration tests cover the command-line interface
+through subprocess execution.
 
-Boolean precedence:
+Integration tests validate:
 
-1. Parentheses
-2. Logical NOT
-3. Logical OR
-
-Statement sequences are separated by semicolons.
-
-To use multiple statements inside the body of an
-if or while statement, use a begin/end block.
-
-The else branch is associated with the nearest
-unmatched if statement.
-
-The executable grammar is the authoritative syntax
-specification for this implementation.
-
-## 6. Valid Programs
-
-Basic assignment:
-
-```text
-begin
-    X := 5
-end
-```
-
-Conditional statement:
-
-```text
-begin
-    if X > 0 then
-        Y := 1
-    else
-        Y := 0
-end
-```
-
-While loop:
-
-```text
-begin
-    while X > 0 do
-    begin
-        X := X - 1
-    end
-end
-```
-
-## 7. Invalid Programs
-
-Incorrect assignment:
-
-```text
-begin
-    X = 5
-end
-```
-
-Missing else:
-
-```text
-begin
-    if X > 0 then skip
-end
-```
-
-Unsupported division:
-
-```text
-begin
-    X := 10 / 2
-end
-```
-
-## 8. Validation
-
-Syntax validation is implemented in:
-
-`src/sipl/syntax.py`
-
-Main functions:
-
-- parse_source()
-- validate_source()
-- validate_file()
-
-Syntax errors contain source line and column
-information when provided by the parser.
-
-The parser returns a Lark concrete parse tree.
-The custom typed AST belongs to CORE-02.
-
-## 9. Automated Tests
-
-Tests are located in:
-
-`tests/test_syntax.py`
-
-The test suite contains:
-
-- 12 positive grammar cases
-- 14 negative grammar cases
-- Parse tree validation
-- Error location validation
-- File validation
-- Parser caching validation
+- Exit codes
+- Text output
+- JSON output
+- AST serialization
+- Execution results
+- Runtime errors
+- Trace events
+- Initial variables
+- Invalid arguments
+- File errors
 
 Run tests:
 
@@ -318,32 +246,14 @@ Run tests:
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-## 10. Limitations
+## 10. Future Modules
 
-This version supports the basic SIPL language.
+The existing APIs will be reused for:
 
-It does not support:
+- VIS-01: Parse tree visualization
+- VIS-02: AST visualization
+- SEM-01: Semantic term generation
 
-- Division
-- Boolean AND
-- Other comparison operators
-- Input/output instructions
-- Procedures
-- Recursive functions
-- User-defined functions
-
-Some ambiguity from the theoretical BNF is resolved
-by explicit parsing conventions.
-
-Additional language constructs must be documented
-as separate extensions.
-
-## 11. References
-
-O. V. Shyshatska, A. V. Kryvolap, A. V. Shyshatskyi.
-
-Theory of Programming. Practical Handbook, 2024.
-
-Practical Work 1: SIPL syntax and BNF.
-
-SIPL Language Toolkit Coursework Specification, 2026.
+The next visualization modules must generate
+their results from actual parse trees and AST nodes,
+not from hardcoded examples.

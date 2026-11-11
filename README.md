@@ -1,10 +1,9 @@
 # SIPL Visual Analyzer
 
-SIPL Visual Analyzer is an educational Python toolkit
-for SIPL (Simple Programming Language).
+SIPL Visual Analyzer is an educational Python toolkit for
+SIPL (Simple Programming Language).
 
-The project is developed for the
-"Theory of Programming" course.
+Developed for the "Theory of Programming" course.
 
 ## Project Goal
 
@@ -28,36 +27,24 @@ coursework specification.
 | REL-02 | GitHub Release | 0.5 |
 | **Total** | | **10.0** |
 
-The table describes the selected project scope,
-not the number of tasks accepted by the instructor.
+The table shows the selected tasks, not the instructor's
+final assessment.
 
 ## Implementation Status
 
 ### Implemented
 
-- Project initialization
-- Python package structure
-- Basic CLI
 - CORE-01: Formal SIPL grammar
-- Syntax validation and error diagnostics
-- Positive and negative grammar tests
-- CORE-02: Typed AST
-- SourceSpan for AST nodes
-- Lark-to-AST conversion
-- CORE-03: SIPL interpreter
-- Assignment and sequence execution
-- Conditional statements and loops
-- Arithmetic and Boolean expressions
-- Initial and final variable states
-- Execution step limit
-- Runtime diagnostics
-- Automated interpreter tests
+- CORE-02: Parser and typed AST with SourceSpan
+- CORE-03: Interpreter with runtime diagnostics
+- CORE-05: CLI with parse, check, run and trace
+- Structured JSON output and documented exit codes
+- Automated unit and integration tests
 
 ### Planned
 
-- CORE-05: Full CLI and JSON interface
 - VIS-01: Parse tree visualization
-- VIS-02: AST visualization
+- VIS-02: AST visualization and comparison
 - SEM-01: Semantic term generation
 - REL-02: GitHub Release
 
@@ -86,21 +73,17 @@ SIPL-Visual-Analyzer/
 │       ├── syntax.py
 │       ├── interpreter/
 │       │   ├── __init__.py
-│       │   └── runtime.py
+│       │   ├── runtime.py
+│       │   └── tracing.py
 │       ├── semantics/
 │       └── visualization/
 ├── examples/
-│   ├── example01.sipl
-│   ├── valid_condition.sipl
-│   ├── valid_loop.sipl
-│   ├── invalid_assignment.sipl
-│   ├── invalid_condition.sipl
-│   └── interpreter_demo.sipl
 ├── tests/
 │   ├── test_cli.py
-│   ├── test_syntax.py
+│   ├── test_cli_integration.py
+│   ├── test_interpreter.py
 │   ├── test_parser.py
-│   └── test_interpreter.py
+│   └── test_syntax.py
 ├── docs/
 │   └── README.md
 ├── pyproject.toml
@@ -110,28 +93,26 @@ SIPL-Visual-Analyzer/
 
 ## Installation
 
-### Requirements
+### Prerequisites
 
 - Python 3.11 or newer
 - Windows PowerShell
 
-### 1. Download the Project
+### 1. Download
 
-Download the project archive from GitHub
-using Code > Download ZIP.
+Download the repository as a ZIP archive using
+GitHub's Code > Download ZIP.
 
-Extract it and open the project directory
-in Visual Studio Code.
+Extract the archive and open its root folder
+in VS Code.
 
-### 2. Create a Virtual Environment
-
-Open PowerShell in the project directory.
+### 2. Create a virtual environment
 
 ```powershell
 py -m venv .venv
 ```
 
-### 3. Install Dependencies
+### 3. Install dependencies
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
@@ -139,87 +120,152 @@ py -m venv .venv
 
 ## CLI Usage
 
-Show help:
+All commands below are executed from the project root.
+
+You can run the CLI using:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli --help
 ```
 
-Show version:
+Or use the installed `sipl` entry point:
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.cli --version
+.\.venv\Scripts\sipl.exe --help
 ```
 
-Show project information:
+### Information
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.cli info
+.\.venv\Scripts\sipl.exe info
 ```
 
-Full parse, check, run and trace commands
-will be added in CORE-05.
+### Check syntax
 
-## Syntax Validation
+```powershell
+.\.venv\Scripts\sipl.exe check examples/valid_loop.sipl
+```
 
-Available functions:
+### Parse to AST
 
-- parse_source(source)
-- validate_source(source)
-- validate_file(path)
+```powershell
+.\.venv\Scripts\sipl.exe parse examples/valid_loop.sipl
+```
+
+### Run a SIPL program
+
+```powershell
+.\.venv\Scripts\sipl.exe run examples/interpreter_demo.sipl
+```
+
+Expected final state:
+
+```text
+Result = 30
+X = 0
+```
+
+### Trace execution
+
+```powershell
+.\.venv\Scripts\sipl.exe trace examples/valid_loop.sipl
+```
+
+The trace includes:
+
+- Before and after statement events
+- Step events
+- Condition evaluations
+- Variable changes
+- Completion event
+
+### Provide initial variables
+
+```powershell
+.\.venv\Scripts\sipl.exe run examples/example01.sipl --state X=2 --state Y=3
+```
+
+Expected result:
+
+```text
+R = 8
+X = 2
+Y = 0
+```
+
+### Set a step limit
+
+```powershell
+.\.venv\Scripts\sipl.exe run examples/valid_loop.sipl --max-steps 100
+```
+
+The default is 10000 execution steps.
+
+## JSON Integration
+
+The commands check, parse, run and trace support --json.
 
 Example:
 
-```python
-from sipl.syntax import validate_source
-
-print(validate_source("begin X := 5 end"))
+```powershell
+.\.venv\Scripts\sipl.exe run examples/interpreter_demo.sipl --json
 ```
 
-Expected output:
+Successful responses use this envelope:
 
-```text
-True
+```json
+{
+  "schema_version": "1.0",
+  "command": "run",
+  "ok": true,
+  "data": {
+    "state": {
+      "Result": 30,
+      "X": 0
+    },
+    "steps": 18
+  },
+  "error": null
+}
 ```
 
-## Typed AST
+The same envelope is used for syntax and runtime errors.
 
-AST classes are implemented in:
+Error responses contain:
 
-`src/sipl/ast.py`
+- code
+- message
+- line
+- column
 
-AST parsing is implemented in:
+The `parse` command includes a typed AST containing
+node_type values and SourceSpan coordinates.
 
-`src/sipl/parser.py`
+The `trace` command includes an ordered events array.
 
-Example:
+JSON is written to stdout. Diagnostic text for
+non-JSON errors is written to stderr.
 
-```python
-from sipl.parser import parse_ast
+## Exit Codes
 
-program = parse_ast("begin X := 5 end")
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | SIPL syntax error |
+| 2 | Invalid CLI arguments |
+| 3 | SIPL runtime error |
+| 4 | File reading error |
 
-print(type(program).__name__)
-```
-
-Expected output:
-
-```text
-Program
-```
-
-Each AST node contains a SourceSpan.
+Invalid CLI arguments use argparse diagnostics.
+The --json response envelope applies to successfully
+parsed CLI arguments.
 
 ## SIPL Interpreter
 
-The interpreter is implemented in:
-
-`src/sipl/interpreter/`
-
-It supports:
+The interpreter supports:
 
 - Assignment
-- Sequential composition
+- Sequential execution
 - If/then/else
 - While/do
 - Begin/end blocks
@@ -227,125 +273,66 @@ It supports:
 - Integer arithmetic
 - Boolean conditions
 
-### Execute SIPL Source
+It uses explicit variable states and has a configurable
+execution step limit.
+
+## Python API
 
 ```python
+from sipl.parser import parse_ast
 from sipl.interpreter import run_source
 
-result = run_source(
-    "begin X := 2; Y := X * 3 end"
-)
+program = parse_ast("begin X := 5 end")
+result = run_source("begin X := 5 end")
 
-print(result.state)
-print(result.steps)
-```
-
-Expected output:
-
-```text
-{'X': 2, 'Y': 6}
-2
-```
-
-### Execute a SIPL File
-
-```python
-from sipl.interpreter import run_file
-
-result = run_file(
-    "examples/interpreter_demo.sipl"
-)
-
+print(type(program).__name__)
 print(result.state)
 ```
 
 Expected output:
 
 ```text
-{'X': 0, 'Result': 30}
+Program
+{'X': 5}
 ```
 
-### Initial Variable State
+## Examples
 
-```python
-from sipl.interpreter import run_source
-
-result = run_source(
-    "begin R := X * 2 end",
-    initial_state={"X": 5},
-)
-
-print(result.state)
-```
-
-Expected output:
-
-```text
-{'X': 5, 'R': 10}
-```
-
-### Execution Step Limit
-
-The default limit is 10000 execution steps.
-
-It can be changed:
-
-```python
-from sipl.interpreter import run_source
-
-result = run_source(
-    "begin X := 5 end",
-    max_steps=100,
-)
-```
-
-The interpreter raises StepLimitExceededError
-when the limit is exceeded.
-
-Reading an undefined variable raises
-UndefinedVariableError.
-
-Runtime errors include source positions.
-
-## SIPL Examples
-
-Valid programs:
+Valid SIPL programs:
 
 - examples/example01.sipl
 - examples/valid_condition.sipl
 - examples/valid_loop.sipl
 - examples/interpreter_demo.sipl
 
-Invalid programs:
+Invalid SIPL programs:
 
 - examples/invalid_assignment.sipl
 - examples/invalid_condition.sipl
 
-## Automated Testing
+## Testing
 
-Run all tests:
+Run all automated tests:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-Run general coverage analysis:
+Run coverage analysis:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
 ```
 
-Verify CORE-03 interpreter coverage:
+Verify interpreter coverage:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter --cov-report=term-missing --cov-fail-under=80
+.\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter.runtime --cov-report=term-missing --cov-fail-under=80
 ```
 
-CORE-03 requires at least 80% interpreter
-coverage and protection against infinite loops.
-
-The test suite checks both normal execution
-and runtime error scenarios.
+Integration tests launch the CLI as a separate
+Python process and validate commands, JSON output,
+diagnostics and exit codes.
 
 ## Documentation
 
@@ -381,5 +368,5 @@ SIPL Language Toolkit Coursework
 
 ## License
 
-MIT License (planned; the license file
-will be added before the public release).
+MIT License (planned; license file will be added
+before the first release).
