@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sipl-visual-analyzer"
+version = "0.1.0"
+description = "SIPL language toolkit for parsing, execution, visualization and formal semantics"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "lark>=1.2,<2.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=5,<8"
+]
+
+[project.scripts]
+sipl = "sipl.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["sipl"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
