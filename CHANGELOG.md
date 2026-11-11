@@ -9,27 +9,30 @@ will be documented here.
 
 - CORE-01 formal SIPL grammar
 - Machine-readable grammar using Lark
-- SIPL syntax validation
-- Syntax errors with source positions
+- Syntax validation and diagnostics
 - Positive and negative grammar tests
 - Valid and invalid SIPL examples
 - CORE-02 typed AST model
 - SourceSpan for AST nodes
-- Custom statement, expression and condition nodes
 - Recursive Lark-to-AST conversion
-- AST parser API
-- AST parser unit tests
-- AST architecture documentation
-
-### Changed
-
-- Preserved arithmetic operators as grammar terminals
-- Updated the project documentation
-- Updated the implementation status in README
+- AST parser tests
+- CORE-03 interpreter
+- Variable state management
+- Arithmetic expression evaluation
+- Boolean condition evaluation
+- Assignment and sequential execution
+- If/then/else execution
+- While loop execution
+- Begin/end and skip execution
+- Execution step limits
+- Undefined variable diagnostics
+- Runtime error handling
+- Interpreter tests and coverage verification
+- Interpreter demonstration example
+- Updated technical documentation
 
 ### Planned
 
-- SIPL interpreter
 - Full CLI and JSON interface
 - Parse tree visualization
 - AST visualization

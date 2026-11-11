@@ -1,0 +1,10 @@
+begin
+    X := 5;
+    Result := 0;
+
+    while X > 0 do
+    begin
+        Result := Result + X * 2;
+        X := X - 1
+    end
+end

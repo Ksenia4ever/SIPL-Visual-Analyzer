@@ -1,4 +1,4 @@
-# SIPL Visual Analyzer Documentation
+# SIPL Visual Analyzer — Technical Documentation
 
 ## 1. Architecture
 
@@ -6,203 +6,279 @@ SIPL Visual Analyzer uses a modular architecture.
 
 The current processing pipeline is:
 
-SIPL Source Code
+```text
+SIPL source
     |
     v
-Lark Grammar
+Lark grammar
     |
     v
-Concrete Parse Tree
+Concrete parse tree
     |
     v
-AST Converter
+Typed AST
     |
     v
-Typed SIPL AST
+SIPL interpreter
+    |
+    v
+ExecutionResult
+```
 
-The typed AST will be reused by the interpreter,
-visualization tools and formal semantics modules.
+The interpreter reuses the parser and AST from
+CORE-01 and CORE-02.
+
+No separate parser is implemented inside the
+execution engine.
 
 ## 2. Formal Grammar
 
-The SIPL grammar is implemented in:
+The grammar is located in:
 
 `src/sipl/grammar.lark`
 
-It supports the core SIPL language constructs
-defined in the Theory of Programming course.
-
-Grammar documentation:
+Detailed language specification:
 
 `grammar/README.md`
 
-## 3. Syntax Analysis
+The supported language includes:
 
-Syntax validation is implemented in:
+- Assignment
+- Sequential composition
+- If/then/else
+- While/do
+- Begin/end
+- Skip
+- Integer arithmetic
+- Boolean conditions
+
+## 3. Syntax and AST
+
+Syntax validation:
 
 `src/sipl/syntax.py`
 
-Available functions:
-
-- parse_source(source)
-- validate_source(source)
-- validate_file(path)
-
-The parser uses Lark with the LALR parsing algorithm.
-
-Invalid programs produce SIPLSyntaxError exceptions
-with source line and column information.
-
-## 4. Typed Abstract Syntax Tree
-
-The typed AST model is implemented in:
+Typed AST models:
 
 `src/sipl/ast.py`
 
-AST conversion is implemented in:
+AST transformation:
 
 `src/sipl/parser.py`
 
-The AST does not depend on Lark data structures.
+Every AST node contains SourceSpan information
+for source position tracking.
 
-### Program
+## 4. Interpreter
 
-Program represents the root of a SIPL program.
+The interpreter is implemented in:
 
-It contains a statement representing the body.
+`src/sipl/interpreter/runtime.py`
 
-### Statements
+Public API:
 
-Supported statement nodes:
+`src/sipl/interpreter/__init__.py`
 
-- Sequence
-- Assignment
-- IfStatement
-- WhileStatement
-- Block
-- Skip
+Main classes:
 
-### Arithmetic Expressions
+- Interpreter
+- ExecutionResult
+- SIPLRuntimeError
+- UndefinedVariableError
+- StepLimitExceededError
 
-Supported expression nodes:
+Main functions:
 
-- IntegerLiteral
-- Variable
-- UnaryMinus
-- BinaryExpression
+- run_source()
+- run_file()
+- run_ast()
 
-BinaryExpression supports:
+## 5. Execution State
+
+The interpreter uses a dictionary that maps
+variable names to integer values.
+
+Example:
+
+```python
+{
+    "X": 5,
+    "Result": 10
+}
+```
+
+An initial state may be supplied by the caller.
+
+Example:
+
+```python
+from sipl.interpreter import run_source
+
+source = "begin R := X * 2 end"
+
+result = run_source(
+    source,
+    initial_state={"X": 5},
+)
+
+print(result.state)
+```
+
+Expected output:
+
+```text
+{'X': 5, 'R': 10}
+```
+
+Variables are not automatically initialized.
+
+Reading an undefined variable raises
+UndefinedVariableError.
+
+## 6. Statement Semantics
+
+### Assignment
+
+The expression is evaluated and its value is
+assigned to the specified variable.
+
+### Sequence
+
+Statements are executed from left to right.
+
+### Conditional
+
+The Boolean condition determines which branch
+is executed.
+
+### While
+
+The condition is evaluated before every iteration.
+
+When the condition becomes false, execution
+continues after the loop.
+
+### Block
+
+A begin/end block executes its contained statements.
+
+Blocks do not introduce a separate variable scope.
+
+### Skip
+
+Skip performs no state modification.
+
+## 7. Arithmetic Expressions
+
+Supported operations:
 
 - Addition
 - Subtraction
 - Multiplication
+- Unary minus
 
-### Boolean Conditions
+Arithmetic uses Python arbitrary-precision integers.
 
-Supported condition nodes:
+Division is not part of the base SIPL grammar.
 
-- Comparison
-- LogicalOr
-- LogicalNot
+## 8. Boolean Conditions
 
-Comparison supports equality and greater-than.
+Supported operations:
 
-## 5. SourceSpan
+- Equality
+- Greater-than
+- Logical OR
+- Logical NOT
 
-Every AST node contains a SourceSpan object.
+Logical OR uses short-circuit evaluation.
 
-SourceSpan stores:
+## 9. Step Limit
 
-- start_line
-- start_column
-- end_line
-- end_column
-- start_pos
-- end_pos
+The default execution limit is 10000 steps.
 
-Line and column numbers are 1-based.
+A step is counted for:
 
-Character offsets are 0-based.
+- Assignment
+- Skip
+- If condition evaluation
+- While condition evaluation
 
-End positions are exclusive.
+The final false while check is also counted.
 
-Source positions allow error reporting,
-source highlighting and navigation.
+Sequence and Block nodes are structural wrappers
+and do not consume an additional step.
 
-Grouping parentheses are not represented as
-independent AST nodes. Their source range is
-included in the corresponding expression or
-condition node.
-
-## 6. Parser API
-
-### parse_ast(source)
-
-Converts SIPL source code into a typed Program AST.
+When the limit is exceeded, the interpreter raises
+StepLimitExceededError.
 
 Example:
 
 ```python
-from sipl.parser import parse_ast
+from sipl.interpreter import run_source
 
-program = parse_ast("begin X := 5 end")
-print(program)
+run_source(
+    "begin X := 1; while X > 0 do skip end",
+    max_steps=10,
+)
 ```
 
-### parse_ast_file(path)
+The interpreter stops execution rather than
+continuing indefinitely.
 
-Reads a SIPL file and returns its typed AST.
+## 10. Error Handling
+
+Syntax errors:
+
+SIPLSyntaxError
+
+Runtime errors:
+
+SIPLRuntimeError
+
+Specialized runtime errors:
+
+- UndefinedVariableError
+- StepLimitExceededError
+
+Runtime errors contain the corresponding SourceSpan
+and a human-readable position.
+
+When execution raises an error, no successful
+ExecutionResult is returned.
+
+## 11. ExecutionResult
+
+The result contains:
+
+- state: final variable values
+- steps: number of execution steps
 
 Example:
 
 ```python
-from sipl.parser import parse_ast_file
+from sipl.interpreter import run_source
 
-program = parse_ast_file("examples/valid_loop.sipl")
-print(program)
+result = run_source("begin X := 5 end")
+
+print(result.state)
+print(result.steps)
 ```
 
-Both functions preserve syntax diagnostics from
-the existing syntax analysis module.
+Expected output:
 
-## 7. Arithmetic Precedence
+```text
+{'X': 5}
+1
+```
 
-The executable grammar uses these priorities:
+## 12. Testing
 
-1. Parentheses
-2. Unary minus
-3. Multiplication
-4. Addition and subtraction
+Tests are located in:
 
-For example:
-
-2 + 3 * 4
-
-is represented as:
-
-2 + (3 * 4)
-
-Arithmetic operators are stored explicitly
-in BinaryExpression nodes.
-
-## 8. Testing
-
-Parser tests:
-
-`tests/test_parser.py`
-
-Tests verify:
-
-- Program and statement nodes
-- Assignments
-- Arithmetic expressions
-- Arithmetic precedence
-- Conditions
-- Loops
-- Nested blocks
-- Source positions
-- Syntax errors
-- File parsing
+- tests/test_cli.py
+- tests/test_syntax.py
+- tests/test_parser.py
+- tests/test_interpreter.py
 
 Run the complete test suite:
 
@@ -210,27 +286,38 @@ Run the complete test suite:
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-## 9. Planned Modules
+Check interpreter coverage:
 
-The typed AST will be used in:
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter --cov-report=term-missing --cov-fail-under=80
+```
 
-- CORE-03: Interpreter
+CORE-03 requires at least 80% coverage
+of the interpreter implementation.
+
+## 13. Current Limitations
+
+The current interpreter supports the basic
+SIPL language from the course.
+
+Not implemented yet:
+
+- Full CLI run/check/trace commands
+- Structured JSON results
+- Execution trace visualization
+- Parse tree and AST visualization
+- Formal semantic terms
+- Recursive function extensions
+
+These capabilities belong to later stages
+or additional modules.
+
+## 14. Planned Integration
+
+The existing interpreter API will be reused by:
+
 - CORE-05: CLI and JSON interface
-- VIS-01: Parse tree visualization
-- VIS-02: AST visualization
-- SEM-01: Semantic term generation
+- VIS modules: visualization
+- SEM-01: semantic analysis
 
-## 10. Design Decisions
-
-The AST consists of custom Python dataclasses.
-
-AST nodes are immutable.
-
-The parser separates concrete syntax from
-semantic structure.
-
-The SourceSpan model is shared across AST nodes.
-
-The AST represents syntactic structure only.
-Execution and evaluation will be implemented
-in subsequent modules.
+This prevents duplication of the execution engine.

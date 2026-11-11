@@ -28,7 +28,7 @@ coursework specification.
 | REL-02 | GitHub Release | 0.5 |
 | **Total** | | **10.0** |
 
-The table represents the selected project scope,
+The table describes the selected project scope,
 not the number of tasks accepted by the instructor.
 
 ## Implementation Status
@@ -42,13 +42,19 @@ not the number of tasks accepted by the instructor.
 - Syntax validation and error diagnostics
 - Positive and negative grammar tests
 - CORE-02: Typed AST
-- Conversion from Lark parse trees to AST
 - SourceSpan for AST nodes
-- AST parser tests
+- Lark-to-AST conversion
+- CORE-03: SIPL interpreter
+- Assignment and sequence execution
+- Conditional statements and loops
+- Arithmetic and Boolean expressions
+- Initial and final variable states
+- Execution step limit
+- Runtime diagnostics
+- Automated interpreter tests
 
 ### Planned
 
-- CORE-03: Interpreter
 - CORE-05: Full CLI and JSON interface
 - VIS-01: Parse tree visualization
 - VIS-02: AST visualization
@@ -79,13 +85,22 @@ SIPL-Visual-Analyzer/
 │       ├── parser.py
 │       ├── syntax.py
 │       ├── interpreter/
+│       │   ├── __init__.py
+│       │   └── runtime.py
 │       ├── semantics/
 │       └── visualization/
 ├── examples/
+│   ├── example01.sipl
+│   ├── valid_condition.sipl
+│   ├── valid_loop.sipl
+│   ├── invalid_assignment.sipl
+│   ├── invalid_condition.sipl
+│   └── interpreter_demo.sipl
 ├── tests/
 │   ├── test_cli.py
+│   ├── test_syntax.py
 │   ├── test_parser.py
-│   └── test_syntax.py
+│   └── test_interpreter.py
 ├── docs/
 │   └── README.md
 ├── pyproject.toml
@@ -102,10 +117,10 @@ SIPL-Visual-Analyzer/
 
 ### 1. Download the Project
 
-Download the project ZIP archive from GitHub
+Download the project archive from GitHub
 using Code > Download ZIP.
 
-Extract the archive and open the project folder
+Extract it and open the project directory
 in Visual Studio Code.
 
 ### 2. Create a Virtual Environment
@@ -143,11 +158,11 @@ Show project information:
 ```
 
 Full parse, check, run and trace commands
-will be implemented during later stages.
+will be added in CORE-05.
 
 ## Syntax Validation
 
-The syntax module provides:
+Available functions:
 
 - parse_source(source)
 - validate_source(source)
@@ -167,27 +182,13 @@ Expected output:
 True
 ```
 
-Invalid example:
-
-```python
-from sipl.syntax import validate_source
-
-print(validate_source("begin X = 5 end"))
-```
-
-Expected output:
-
-```text
-False
-```
-
 ## Typed AST
 
-The AST model is implemented in:
+AST classes are implemented in:
 
 `src/sipl/ast.py`
 
-The AST converter is implemented in:
+AST parsing is implemented in:
 
 `src/sipl/parser.py`
 
@@ -196,37 +197,126 @@ Example:
 ```python
 from sipl.parser import parse_ast
 
-source = "begin X := 2 + 3 * 4 end"
-
-program = parse_ast(source)
+program = parse_ast("begin X := 5 end")
 
 print(type(program).__name__)
-print(type(program.body).__name__)
 ```
 
 Expected output:
 
 ```text
 Program
-Sequence
 ```
 
-The AST uses custom dataclasses and contains
-source position information through SourceSpan.
+Each AST node contains a SourceSpan.
 
-The parser supports assignments, sequences,
-conditionals, loops, blocks, arithmetic expressions
-and Boolean conditions.
+## SIPL Interpreter
+
+The interpreter is implemented in:
+
+`src/sipl/interpreter/`
+
+It supports:
+
+- Assignment
+- Sequential composition
+- If/then/else
+- While/do
+- Begin/end blocks
+- Skip
+- Integer arithmetic
+- Boolean conditions
+
+### Execute SIPL Source
+
+```python
+from sipl.interpreter import run_source
+
+result = run_source(
+    "begin X := 2; Y := X * 3 end"
+)
+
+print(result.state)
+print(result.steps)
+```
+
+Expected output:
+
+```text
+{'X': 2, 'Y': 6}
+2
+```
+
+### Execute a SIPL File
+
+```python
+from sipl.interpreter import run_file
+
+result = run_file(
+    "examples/interpreter_demo.sipl"
+)
+
+print(result.state)
+```
+
+Expected output:
+
+```text
+{'X': 0, 'Result': 30}
+```
+
+### Initial Variable State
+
+```python
+from sipl.interpreter import run_source
+
+result = run_source(
+    "begin R := X * 2 end",
+    initial_state={"X": 5},
+)
+
+print(result.state)
+```
+
+Expected output:
+
+```text
+{'X': 5, 'R': 10}
+```
+
+### Execution Step Limit
+
+The default limit is 10000 execution steps.
+
+It can be changed:
+
+```python
+from sipl.interpreter import run_source
+
+result = run_source(
+    "begin X := 5 end",
+    max_steps=100,
+)
+```
+
+The interpreter raises StepLimitExceededError
+when the limit is exceeded.
+
+Reading an undefined variable raises
+UndefinedVariableError.
+
+Runtime errors include source positions.
 
 ## SIPL Examples
 
-Valid examples:
+Valid programs:
 
 - examples/example01.sipl
 - examples/valid_condition.sipl
 - examples/valid_loop.sipl
+- examples/interpreter_demo.sipl
 
-Invalid examples:
+Invalid programs:
 
 - examples/invalid_assignment.sipl
 - examples/invalid_condition.sipl
@@ -239,26 +329,23 @@ Run all tests:
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-Run with coverage:
+Run general coverage analysis:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
 ```
 
-Tests include:
+Verify CORE-03 interpreter coverage:
 
-- CLI tests
-- Positive grammar tests
-- Negative grammar tests
-- Syntax error tests
-- AST structure tests
-- SourceSpan tests
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter --cov-report=term-missing --cov-fail-under=80
+```
 
-The CORE-03 interpreter requires at least
-80% test coverage of the language core.
+CORE-03 requires at least 80% interpreter
+coverage and protection against infinite loops.
 
-This criterion will be verified after
-the interpreter is implemented.
+The test suite checks both normal execution
+and runtime error scenarios.
 
 ## Documentation
 
@@ -280,10 +367,11 @@ the interpreter is implemented.
 
 ## Release
 
-The project follows the Semantic Versioning approach.
+The project follows Semantic Versioning.
 
-A tagged release with release notes, a changelog
-and build artifacts will be prepared for REL-02.
+A tagged GitHub Release with release notes,
+CHANGELOG and build artifacts will be prepared
+for REL-02.
 
 ## Course
 
@@ -293,5 +381,5 @@ SIPL Language Toolkit Coursework
 
 ## License
 
-MIT License (planned; the license file will
-be added before the public release).
+MIT License (planned; the license file
+will be added before the public release).
