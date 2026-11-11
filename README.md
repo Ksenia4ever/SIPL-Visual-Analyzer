@@ -8,11 +8,11 @@ The project is developed for the
 
 ## Project Goal
 
-The goal is to implement a modular toolkit for parsing,
+The goal is to create a modular toolkit for parsing,
 executing, visualizing and analyzing SIPL programs.
 
-The project follows the modular architecture described
-in the SIPL Language Toolkit coursework specification.
+The project follows the architecture described in
+the SIPL Language Toolkit coursework specification.
 
 ## Selected Tasks
 
@@ -28,22 +28,30 @@ in the SIPL Language Toolkit coursework specification.
 | REL-02 | GitHub Release | 0.5 |
 | **Total** | | **10.0** |
 
-The selected tasks represent the planned scope of the
-project. This table is not a completion claim.
+The table describes the selected project scope,
+not the total number of completed tasks.
 
-## Current Status
+## Implementation Status
 
-Stage 1: Project initialization completed.
+### Completed
 
-Currently implemented:
-
+- Project initialization
 - Python package structure
 - Basic CLI with info and version commands
-- Initial automated CLI tests
-- Example SIPL program
+- CORE-01: Formal SIPL Grammar
+- Syntax validation
+- Error location reporting
+- Positive and negative syntax tests
 
-The grammar, parser, interpreter, visualization and
-semantic modules will be implemented in later stages.
+### Planned
+
+- CORE-02: Parser and typed AST
+- CORE-03: Interpreter
+- CORE-05: Full CLI and JSON mode
+- VIS-01: Parse tree visualization
+- VIS-02: AST visualization
+- SEM-01: Semantic term generation
+- REL-02: GitHub Release
 
 ## Technologies
 
@@ -51,7 +59,7 @@ semantic modules will be implemented in later stages.
 - Lark
 - pytest
 - pytest-cov
-- Graphviz (planned for visualization)
+- Graphviz (planned)
 - Git and GitHub
 
 ## Project Structure
@@ -59,14 +67,20 @@ semantic modules will be implemented in later stages.
 ```text
 SIPL-Visual-Analyzer/
 ├── grammar/
+│   └── README.md
 ├── src/
 │   └── sipl/
+│       ├── __init__.py
 │       ├── cli.py
+│       ├── grammar.lark
+│       ├── syntax.py
 │       ├── interpreter/
 │       ├── semantics/
 │       └── visualization/
 ├── examples/
 ├── tests/
+│   ├── test_cli.py
+│   └── test_syntax.py
 ├── docs/
 ├── pyproject.toml
 ├── CHANGELOG.md
@@ -78,17 +92,17 @@ SIPL-Visual-Analyzer/
 ### Prerequisites
 
 - Python 3.11 or newer
-- Git (optional)
+- Windows PowerShell
 
-### 1. Download the project
+### 1. Download the Project
 
-Download the repository as a ZIP archive from GitHub
-using Code > Download ZIP.
+Download the project archive from GitHub using:
 
-Extract the archive and open the project folder
-in Visual Studio Code.
+Code > Download ZIP
 
-### 2. Create a virtual environment
+Extract it and open the project folder in VS Code.
+
+### 2. Create a Virtual Environment
 
 Open PowerShell in the project directory:
 
@@ -96,15 +110,13 @@ Open PowerShell in the project directory:
 py -m venv .venv
 ```
 
-### 3. Install dependencies
-
-On Windows PowerShell:
+### 3. Install Dependencies
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-## Basic Usage
+## CLI Usage
 
 Show help:
 
@@ -118,73 +130,120 @@ Show version:
 .\.venv\Scripts\python.exe -m sipl.cli --version
 ```
 
-Show project information:
+Show information:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli info
 ```
 
-The final CLI will also support:
+The CLI commands parse, check, run and trace
+will be added during later stages.
 
-- parse
-- check
-- run
-- trace
+## Syntax Validation
 
-These commands are not implemented yet.
+The syntax module provides three functions:
+
+- parse_source(source)
+- validate_source(source)
+- validate_file(path)
+
+Example:
+
+```python
+from sipl.syntax import validate_source
+
+source = "begin X := 5 end"
+
+print(validate_source(source))
+```
+
+Expected output:
+
+```text
+True
+```
+
+Invalid example:
+
+```python
+from sipl.syntax import validate_source
+
+source = "begin X = 5 end"
+
+print(validate_source(source))
+```
+
+Expected output:
+
+```text
+False
+```
+
+The grammar is located in:
+
+`src/sipl/grammar.lark`
+
+Detailed grammar documentation:
+
+`grammar/README.md`
 
 ## Testing
 
-Run automated tests:
+Run all tests:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-Run tests with coverage:
+Run coverage analysis:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
 ```
 
-The CORE-03 task requires at least 80% test coverage
-of the implemented language core.
+The CORE-03 module requires at least 80% coverage
+of the language core.
 
-This requirement will be checked after the interpreter
-is implemented.
+This criterion will be verified after implementation
+of the interpreter.
 
-## SIPL Example
+## SIPL Examples
 
-```text
-begin
-    R := 1;
-    while Y > 0 do
-    begin
-        R := R * X;
-        Y := Y - 1
-    end
-end
-```
+Valid examples:
 
-The example program is located in:
+- examples/example01.sipl
+- examples/valid_condition.sipl
+- examples/valid_loop.sipl
 
-`examples/example01.sipl`
+Invalid examples:
+
+- examples/invalid_assignment.sipl
+- examples/invalid_condition.sipl
+
+## Development Roadmap
+
+1. Formal grammar - CORE-01
+2. Parser and typed AST - CORE-02
+3. Interpreter - CORE-03
+4. CLI and JSON output - CORE-05
+5. Parse tree visualization - VIS-01
+6. AST visualization - VIS-02
+7. Formal semantics - SEM-01
+8. Release and documentation - REL-02
 
 ## Documentation
 
-Additional documentation is available in:
-
-- grammar/
+- grammar/README.md
 - docs/
 - examples/
 - tests/
 
 ## Release
 
-The project plans to use Semantic Versioning.
+The project uses Semantic Versioning.
 
-REL-02 requires a tagged GitHub release with release notes,
-a changelog and build artifacts.
+A tagged GitHub Release with notes, CHANGELOG
+and build artifacts will be prepared for REL-02.
 
 ## Course
 
@@ -194,4 +253,5 @@ SIPL Language Toolkit Coursework
 
 ## License
 
-MIT License (planned; license file to be added before release).
+MIT License (planned; license file will be added
+before the first public release).

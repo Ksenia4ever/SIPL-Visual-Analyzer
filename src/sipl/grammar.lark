@@ -1,0 +1,71 @@
+// SIPL formal grammar
+// Theory of Programming coursework
+//
+// Basic statements:
+// assignment, composition, conditional,
+// while loop, begin/end block, skip.
+//
+// Arithmetic:
+// integer constants, variables, +, -, *.
+//
+// Conditions:
+// equality, greater-than, logical OR, logical NOT.
+
+start: "begin" statement "end"
+
+// Statements
+
+?statement: statement_atom (";" statement_atom)* -> sequence
+
+?statement_atom: assignment
+               | conditional
+               | loop
+               | block
+               | "skip" -> skip_stmt
+
+assignment: NAME ":=" expression
+
+conditional: "if" condition "then" statement_atom "else" statement_atom
+
+loop: "while" condition "do" statement_atom
+
+block: "begin" statement "end"
+
+
+// Boolean conditions
+
+?condition: disjunction
+
+?disjunction: negation ("∨" negation)* -> or_condition
+
+?negation: "¬" negation -> not_condition
+         | "(" condition ")" -> grouped_condition
+         | comparison
+
+comparison: expression COMPARATOR expression
+
+COMPARATOR: "=" | ">"
+
+
+// Arithmetic expressions
+
+?expression: sum
+
+?sum: product (("+" | "-") product)* -> sum_expr
+
+?product: unary ("*" unary)* -> product_expr
+
+?unary: "-" unary -> negative
+      | NUMBER -> number
+      | NAME -> variable
+      | "(" expression ")" -> grouped_expression
+
+
+// Lexical rules
+
+NAME: /(?!begin\b|end\b|if\b|then\b|else\b|while\b|do\b|skip\b)[A-Za-z][A-Za-z0-9_]*/
+
+NUMBER: /[0-9]+/
+
+%import common.WS
+%ignore WS
