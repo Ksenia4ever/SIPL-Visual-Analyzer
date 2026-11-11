@@ -1,14 +1,30 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "sipl-visual-analyzer"
-version = "0.1.0"
-description = "SIPL language toolkit for parsing, execution, visualization and formal semantics"
+version = "1.0.0"
+description = "SIPL toolkit for parsing, execution, visualization and formal semantics"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+
+keywords = [
+    "SIPL",
+    "parser",
+    "interpreter",
+    "AST",
+    "formal-semantics",
+    "visualization"
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Interpreters"
+]
 
 dependencies = [
     "lark>=1.2,<2.0"
@@ -22,6 +38,9 @@ dev = [
 
 [project.scripts]
 sipl = "sipl.cli:main"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]

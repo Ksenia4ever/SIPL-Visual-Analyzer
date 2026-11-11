@@ -1,47 +1,81 @@
 # Changelog
 
-All notable changes to SIPL Visual Analyzer
-are documented in this file.
+All notable changes to SIPL Visual Analyzer are documented here.
 
-## [Unreleased]
+The project follows Semantic Versioning.
+
+## [1.0.0] - 2026-11-11
 
 ### Added
 
-- CORE-01 formal SIPL grammar
-- Lexical specification and grammar tests
-- CORE-02 typed AST with SourceSpan
-- Lark-to-AST transformation
-- CORE-03 SIPL interpreter
-- Runtime diagnostics and step limits
-- CORE-05 command-line interface
-- JSON output and integration tests
-- VIS-01 concrete syntax-tree visualization
-- CST Text, JSON, DOT and SVG exports
-- VIS-02 typed AST visualization
-- AST Text, JSON, DOT and SVG exports
-- Side-by-side CST/AST comparison
-- SEM-01 formal semantic-term generation
-- Recursive AST-to-semantic-term conversion
-- ASIPL composition notation
-- Semantic term text rendering
-- Structured JSON semantic-term export
-- Source-linked semantic term nodes
-- Golden tests for semantic terms
-- Golden test for the course example
-- SEM-01 command-line interface
-- Updated project documentation
+#### CORE-01 — Formal Grammar
+- Machine-readable SIPL grammar using Lark
+- Lexical rules and syntax validation
+- Positive and negative grammar tests
+- Syntax diagnostics with source positions
 
-### Planned
+#### CORE-02 — Typed AST
+- Custom typed AST using immutable Python dataclasses
+- SourceSpan metadata for AST nodes
+- Lark-to-AST conversion
+- Parser tests
 
-- REL-02 tagged GitHub Release
+#### CORE-03 — Interpreter
+- SIPL assignment and sequential execution
+- If/then/else and while loops
+- Begin/end and skip statements
+- Arithmetic and Boolean expressions
+- Variable state management
+- Runtime diagnostics
+- Execution step limit
+
+#### CORE-05 — CLI
+- Check, parse, run and trace commands
+- Structured JSON output
+- Documented exit codes
+- Initial state arguments
+- Source-linked execution trace
+- CLI integration tests
+
+#### VIS-01 — CST Visualization
+- Concrete syntax tree generation
+- Text, JSON, DOT and SVG export
+- Source coordinates for grammar nodes
+- Graphviz rendering
+
+#### VIS-02 — AST Visualization
+- Typed AST visualization
+- AST Text, JSON, DOT and SVG export
+- CST/AST comparison statistics
+- Side-by-side HTML comparison
+- Source-linked AST nodes
+
+#### SEM-01 — Formal Semantics
+- Recursive semantic-term construction
+- ASIPL course notation
+- Text and JSON term export
+- Golden semantic-term tests
+- Example from the Theory of Programming handbook
+
+#### REL-02 — Release
+- Semantic Versioning
+- MIT License
+- Source distribution and wheel packaging
+- Release documentation
+- GitHub tagged release preparation
+
+### Quality Assurance
+- Automated unit and integration tests
+- Golden tests for formal semantics
+- Coverage verification for the interpreter
+- Build and distribution verification
 
 ## [0.1.0] - 2026-11-11
 
 ### Added
-
 - Initial Python project structure
 - Python package configuration
 - Basic CLI with info and version commands
-- Initial automated CLI tests
+- Initial CLI tests
 - Initial SIPL example
 - Documentation structure

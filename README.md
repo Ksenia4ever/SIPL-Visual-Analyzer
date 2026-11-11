@@ -1,20 +1,16 @@
 # SIPL Visual Analyzer
 
-SIPL Visual Analyzer is an educational Python toolkit
-for the SIPL (Simple Programming Language).
+SIPL Visual Analyzer is an educational Python toolkit for
+SIPL (Simple Programming Language), developed for the
+Theory of Programming course.
 
-Developed for the Theory of Programming course.
+It supports formal grammar analysis, typed AST construction,
+program execution, visualization and semantic-term generation.
 
-## Project Goal
+## Selected Coursework Tasks
 
-The project implements a modular toolkit for syntax
-analysis, execution, visualization and formal semantics
-of SIPL programs.
-
-## Selected Tasks
-
-| Task ID | Description | Points |
-|---------|-------------|--------|
+| Task ID | Module | Points |
+|---------|--------|--------|
 | CORE-01 | Formal SIPL Grammar | 0.5 |
 | CORE-02 | Parser and Typed AST | 1.5 |
 | CORE-03 | SIPL Interpreter | 2.0 |
@@ -25,26 +21,63 @@ of SIPL programs.
 | REL-02 | GitHub Release | 0.5 |
 | **Total** | | **10.0** |
 
-Points represent the selected coursework scope,
+The table describes the selected coursework scope,
 not the instructor's final assessment.
 
-## Implementation Status
+## Release
 
-### Implemented
+**Version:** 1.0.0
 
-- CORE-01: Formal grammar and syntax validation
-- CORE-02: Typed AST with SourceSpan
-- CORE-03: Interpreter and runtime diagnostics
-- CORE-05: CLI and JSON interface
-- VIS-01: CST visualization
-- VIS-02: AST visualization and CST/AST comparison
-- SEM-01: Recursive semantic-term generation
-- ASIPL semantic notation
-- Golden tests for semantic terms
+**License:** MIT
 
-### Planned
+**Python:** 3.11+
 
-- REL-02: Tagged GitHub Release
+See `CHANGELOG.md` and `docs/RELEASE_NOTES_v1.0.0.md`
+for release information.
+
+## Features
+
+### Formal Grammar — CORE-01
+- Lark-based SIPL grammar
+- Lexical specification
+- Positive and negative syntax tests
+- Syntax error diagnostics
+
+### Parser — CORE-02
+- Custom typed AST
+- SourceSpan coordinates
+- AST construction from Lark
+
+### Interpreter — CORE-03
+- Assignments and sequential execution
+- If/then/else and while loops
+- Begin/end and skip
+- Arithmetic and Boolean conditions
+- Variable state
+- Step limits and runtime diagnostics
+
+### CLI — CORE-05
+- check
+- parse
+- run
+- trace
+- JSON responses
+- Documented exit codes
+
+### CST Visualization — VIS-01
+- Text, JSON, DOT and SVG
+- Source-linked grammar nodes
+
+### AST Visualization — VIS-02
+- Text, JSON, DOT and SVG
+- Side-by-side HTML CST/AST comparison
+- Source positions and node statistics
+
+### Formal Semantics — SEM-01
+- Recursive semantic-term construction
+- ASIPL course notation
+- Text and JSON output
+- Golden tests
 
 ## Technologies
 
@@ -84,34 +117,27 @@ SIPL-Visual-Analyzer/
 │           ├── ast_tree.py
 │           └── ast_cli.py
 ├── examples/
+├── grammar/
+├── docs/
+│   ├── README.md
+│   └── RELEASE_NOTES_v1.0.0.md
 ├── tests/
 │   ├── golden/
 │   │   └── semantic_terms.json
-│   ├── test_cli.py
-│   ├── test_cli_integration.py
-│   ├── test_interpreter.py
-│   ├── test_parser.py
-│   ├── test_parse_tree_visualization.py
-│   ├── test_ast_visualization.py
-│   ├── test_semantics.py
-│   └── test_syntax.py
-├── docs/
-│   └── README.md
+│   └── test_*.py
 ├── pyproject.toml
+├── MANIFEST.in
 ├── CHANGELOG.md
+├── LICENSE
 └── README.md
 ```
 
-## Installation
+## Installation from Source
 
-### Requirements
+Download the repository ZIP archive from GitHub
+and extract it.
 
-- Python 3.11 or newer
-- Windows PowerShell
-- Graphviz for SVG visualization
-
-Download the project and open the root directory
-in Visual Studio Code.
+Open the project folder in VS Code.
 
 Create a virtual environment:
 
@@ -119,231 +145,218 @@ Create a virtual environment:
 py -m venv .venv
 ```
 
-Install dependencies:
+Install the project with development dependencies:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-Install Graphviz if it is not already available:
-
-```powershell
-winget install --id Graphviz.Graphviz -e
-```
-
-Check Graphviz:
-
-```powershell
-dot -V
-```
-
-## CORE-01: Grammar
-
-The formal SIPL grammar is located in:
-
-`src/sipl/grammar.lark`
-
-Lexical specification and grammar documentation:
-
-`grammar/README.md`
-
-## CORE-02: Typed AST
-
-The custom AST model is implemented in:
-
-`src/sipl/ast.py`
-
-AST transformation:
-
-`src/sipl/parser.py`
-
-Every AST node contains SourceSpan coordinates.
-
-## CORE-03: Interpreter
-
-The interpreter supports:
-
-- Assignment
-- Sequential composition
-- Conditional statements
-- While loops
-- Begin/end blocks
-- Skip
-- Arithmetic expressions
-- Boolean conditions
-- Variable states
-- Execution step limits
-
-Example:
-
-```python
-from sipl.interpreter import run_source
-
-result = run_source(
-    "begin X := 2; Y := X * 3 end"
-)
-
-print(result.state)
-```
-
-Expected output:
-
-```text
-{'X': 2, 'Y': 6}
-```
-
-## CORE-05: Main CLI
-
-Show help:
+The CLI is available through:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli --help
 ```
 
-Check syntax:
+Or:
+
+```powershell
+.\.venv\Scripts\sipl.exe --help
+```
+
+## Install from Release Wheel
+
+Download the `.whl` file from the GitHub Release.
+
+Install:
+
+```powershell
+py -m pip install .\sipl_visual_analyzer-1.0.0-py3-none-any.whl
+```
+
+A wheel installation contains the Python package,
+but not the repository examples and test suite.
+
+Download the repository source archive if you
+want to run the examples or the tests.
+
+## Graphviz Installation
+
+Graphviz is required for SVG visualization.
+
+Windows:
+
+```powershell
+winget install --id Graphviz.Graphviz -e
+```
+
+Check:
+
+```powershell
+dot -V
+```
+
+## Main CLI
+
+### Check SIPL Syntax
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli check examples/valid_loop.sipl
 ```
 
-Parse source:
+### Parse SIPL to AST
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli parse examples/example01.sipl
 ```
 
-Execute source:
+### Run a SIPL Program
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli run examples/interpreter_demo.sipl
 ```
 
-Trace execution:
+Expected result:
 
-```powershell
-.\.venv\Scripts\python.exe -m sipl.cli trace examples/valid_loop.sipl
+```text
+Execution completed successfully.
+
+Final state:
+  Result = 30
+  X = 0
+
+Steps: 18
 ```
 
-Supply initial state:
+### Initial Variable Values
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli run examples/example01.sipl --state X=2 --state Y=3
 ```
 
-JSON output is supported using `--json`.
+The example calculates 2 to the power of 3
+using repeated multiplication.
 
-## VIS-01: Concrete Syntax Tree
+Expected final values:
 
-The concrete syntax tree includes grammar rules,
-keywords, operators and punctuation.
+```text
+R = 8
+X = 2
+Y = 0
+```
 
-Export all CST formats:
+### Trace
+
+```powershell
+.\.venv\Scripts\python.exe -m sipl.cli trace examples/valid_loop.sipl
+```
+
+### JSON Output
+
+Use `--json` with check, parse, run or trace:
+
+```powershell
+.\.venv\Scripts\python.exe -m sipl.cli run examples/interpreter_demo.sipl --json
+```
+
+Main CLI exit codes:
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | SIPL syntax error |
+| 2 | Invalid CLI arguments |
+| 3 | SIPL runtime error |
+| 4 | File reading error |
+
+## VIS-01: CST Visualization
+
+Generate all concrete syntax-tree exports:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.visualization examples/example01.sipl --format all --output output/example01
 ```
 
-Supported formats:
+The command generates:
 
 - TXT
 - JSON
 - DOT
 - SVG
 
-## VIS-02: Abstract Syntax Tree
+The CST contains grammar rules, terminal tokens
+and source positions.
 
-AST visualization uses the custom typed AST.
+## VIS-02: AST Visualization
 
-Generate all AST and comparison files:
+Generate typed AST and comparison outputs:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format all --output output/ast_example01
 ```
 
-The command creates AST TXT, JSON, DOT and SVG,
-as well as comparison JSON and HTML.
+Generated files include:
 
-The HTML report displays CST and AST side by side.
+- AST TXT
+- AST JSON
+- AST DOT
+- AST SVG
+- Comparison JSON
+- Comparison HTML
 
-## SEM-01: Semantic Term Generation
+The HTML report shows CST and AST side by side.
 
-The semantic-term module recursively transforms
-typed SIPL AST nodes into ASIPL algebraic terms.
+## SEM-01: Semantic Terms
 
-It follows the notation of the Theory of Programming
-practical handbook.
-
-The implementation is located in:
-
-`src/sipl/semantics/terms.py`
-
-### Generate a Semantic Term
+Generate an ASIPL semantic term:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl
 ```
 
-The result uses semantic operators such as:
-
-- AS^X: assignment
-- S²: binary superposition
-- S¹: unary superposition
-- IF: conditional
-- WH: while loop
-- id: skip
-- ·: sequential composition
-
-### Generate JSON
+Generate JSON:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl --format json
 ```
 
-The JSON document includes:
-
-- schema_version
-- notation
-- term
-- structure
-
-The structure contains recursively nested
-semantic operators and source coordinates.
-
-### Export to a File
+Save a term to a file:
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl --format text --output output/example01.semantic.txt
+.\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl --output output/example01.semantic.txt
 ```
 
-### Python API
+The module generates formal terms recursively
+from the typed AST.
+
+It supports assignments, sequences, conditionals,
+loops, blocks, skip, arithmetic and Boolean operations.
+
+The semantics module constructs terms; it does not
+evaluate those terms against a state.
+
+## Python API
 
 ```python
 from sipl.parser import parse_ast
+from sipl.interpreter import run_source
 from sipl.semantics import build_term, format_term
 
-program = parse_ast("begin X := 5 end")
+source = "begin X := 5 end"
 
-term = build_term(program)
+ast = parse_ast(source)
+result = run_source(source)
+term = build_term(ast)
 
+print(result.state)
 print(format_term(term))
 ```
 
 Expected output:
 
 ```text
+{'X': 5}
 AS^X(5̅)
 ```
-
-### Semantic Scope
-
-SEM-01 constructs formal semantic terms.
-
-It does not evaluate the terms on a supplied state.
-Program execution is implemented separately
-in CORE-03.
-
-Unary arithmetic minus uses an explicitly
-documented extension named `uminus`.
 
 ## Testing
 
@@ -359,54 +372,50 @@ Run coverage:
 .\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
 ```
 
-Run semantic-term tests:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_semantics.py -v
-```
-
-Golden expected outputs are stored in:
-
-`tests/golden/semantic_terms.json`
-
-Verify CORE-03 coverage:
+Check the interpreter coverage requirement:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter.runtime --cov-report=term-missing --cov-fail-under=80
 ```
 
+Coverage for CLI entry points can be underestimated
+when the test suite launches subprocesses.
+
+The interpreter has a separate coverage requirement.
+
+## Build Distribution
+
+Install build tools:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install build twine
+```
+
+Build the wheel and source distribution:
+
+```powershell
+.\.venv\Scripts\python.exe -m build
+```
+
+Output files are placed in the `dist/` directory.
+
 ## Documentation
 
-- grammar/README.md
-- docs/README.md
-- examples/
-- tests/
-
-## Development Roadmap
-
-1. CORE-01: Formal grammar
-2. CORE-02: Typed AST
-3. CORE-03: Interpreter
-4. CORE-05: CLI and JSON
-5. VIS-01: CST visualization
-6. VIS-02: AST visualization and comparison
-7. SEM-01: Semantic term generation
-8. REL-02: GitHub Release
-
-## Release
-
-A tagged GitHub Release with release notes,
-CHANGELOG and build artifacts will be prepared
-for REL-02.
+- `grammar/README.md`
+- `docs/README.md`
+- `docs/RELEASE_NOTES_v1.0.0.md`
+- `CHANGELOG.md`
 
 ## References
 
-Shyshatska O. V., Kryvolap A. V.,
-Shyshatskyi A. V.
+O. V. Shyshatska, A. V. Kryvolap,
+A. V. Shyshatskyi.
 
 Theory of Programming. Practical Handbook, 2024.
 
-Practical Work 2: Semantics and semantic terms.
+M. S. Nikitchenko.
+
+Theory of Programming, 2020.
 
 ## Course
 
@@ -416,5 +425,6 @@ SIPL Language Toolkit Coursework
 
 ## License
 
-MIT License (planned; a LICENSE file will be
-added before the public release).
+This project is distributed under the MIT License.
+
+See `LICENSE`.
