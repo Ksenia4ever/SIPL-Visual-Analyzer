@@ -1,17 +1,17 @@
 # SIPL Visual Analyzer
 
-SIPL Visual Analyzer is an educational Python toolkit for
-SIPL (Simple Programming Language).
+SIPL Visual Analyzer is an educational Python toolkit
+for SIPL (Simple Programming Language).
 
-Developed for the "Theory of Programming" course.
+Developed for the Theory of Programming course.
 
 ## Project Goal
 
-The goal is to create a modular toolkit for parsing,
+The project provides a modular toolkit for parsing,
 executing, visualizing and analyzing SIPL programs.
 
-The project follows the SIPL Language Toolkit
-coursework specification.
+It follows the SIPL Language Toolkit coursework
+specification.
 
 ## Selected Tasks
 
@@ -22,31 +22,29 @@ coursework specification.
 | CORE-03 | SIPL Interpreter | 2.0 |
 | CORE-05 | Command-Line Interface | 1.0 |
 | VIS-01 | Parse Tree Visualization | 1.5 |
-| VIS-02 | AST Visualization | 1.0 |
+| VIS-02 | AST Visualization and Comparison | 1.0 |
 | SEM-01 | Semantic Term Generation | 2.0 |
 | REL-02 | GitHub Release | 0.5 |
 | **Total** | | **10.0** |
 
-The table shows the selected tasks, not the instructor's
-final assessment.
+The points represent the selected coursework tasks,
+not the instructor's final assessment.
 
 ## Implementation Status
 
 ### Implemented
 
-- CORE-01: Formal SIPL grammar
-- CORE-02: Parser and typed AST with SourceSpan
-- CORE-03: Interpreter with runtime diagnostics
-- CORE-05: CLI with parse, check, run and trace
-- Structured JSON output and documented exit codes
-- Automated unit and integration tests
+- CORE-01: SIPL grammar and syntax validation
+- CORE-02: Typed AST and SourceSpan
+- CORE-03: SIPL interpreter
+- CORE-05: CLI and JSON interface
+- VIS-01: CST visualization
+- VIS-02: AST visualization and CST/AST comparison
 
 ### Planned
 
-- VIS-01: Parse tree visualization
-- VIS-02: AST visualization and comparison
-- SEM-01: Semantic term generation
-- REL-02: GitHub Release
+- SEM-01: Formal semantic term generation
+- REL-02: Tagged GitHub Release
 
 ## Technologies
 
@@ -54,7 +52,7 @@ final assessment.
 - Lark
 - pytest
 - pytest-cov
-- Graphviz (planned)
+- Graphviz
 - Git and GitHub
 
 ## Project Structure
@@ -77,12 +75,19 @@ SIPL-Visual-Analyzer/
 │       │   └── tracing.py
 │       ├── semantics/
 │       └── visualization/
+│           ├── __init__.py
+│           ├── __main__.py
+│           ├── tree.py
+│           ├── ast_tree.py
+│           └── ast_cli.py
 ├── examples/
 ├── tests/
 │   ├── test_cli.py
 │   ├── test_cli_integration.py
 │   ├── test_interpreter.py
 │   ├── test_parser.py
+│   ├── test_parse_tree_visualization.py
+│   ├── test_ast_visualization.py
 │   └── test_syntax.py
 ├── docs/
 │   └── README.md
@@ -93,69 +98,67 @@ SIPL-Visual-Analyzer/
 
 ## Installation
 
-### Prerequisites
+### Requirements
 
 - Python 3.11 or newer
 - Windows PowerShell
+- Graphviz for SVG and HTML comparison
 
-### 1. Download
+### 1. Download the Project
 
-Download the repository as a ZIP archive using
-GitHub's Code > Download ZIP.
+Download the project using GitHub's
+Code > Download ZIP feature.
 
-Extract the archive and open its root folder
-in VS Code.
+Extract the archive and open it in VS Code.
 
-### 2. Create a virtual environment
+### 2. Create a Virtual Environment
 
 ```powershell
 py -m venv .venv
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-## CLI Usage
+### 4. Install Graphviz
 
-All commands below are executed from the project root.
+```powershell
+winget install --id Graphviz.Graphviz -e
+```
 
-You can run the CLI using:
+Restart the terminal and check:
+
+```powershell
+dot -V
+```
+
+## Main CLI
+
+### Help
 
 ```powershell
 .\.venv\Scripts\python.exe -m sipl.cli --help
 ```
 
-Or use the installed `sipl` entry point:
+### Check Syntax
 
 ```powershell
-.\.venv\Scripts\sipl.exe --help
+.\.venv\Scripts\python.exe -m sipl.cli check examples/valid_loop.sipl
 ```
 
-### Information
+### Parse to Typed AST
 
 ```powershell
-.\.venv\Scripts\sipl.exe info
+.\.venv\Scripts\python.exe -m sipl.cli parse examples/valid_loop.sipl
 ```
 
-### Check syntax
+### Execute a Program
 
 ```powershell
-.\.venv\Scripts\sipl.exe check examples/valid_loop.sipl
-```
-
-### Parse to AST
-
-```powershell
-.\.venv\Scripts\sipl.exe parse examples/valid_loop.sipl
-```
-
-### Run a SIPL program
-
-```powershell
-.\.venv\Scripts\sipl.exe run examples/interpreter_demo.sipl
+.\.venv\Scripts\python.exe -m sipl.cli run examples/interpreter_demo.sipl
 ```
 
 Expected final state:
@@ -165,174 +168,168 @@ Result = 30
 X = 0
 ```
 
-### Trace execution
+### Trace Execution
 
 ```powershell
-.\.venv\Scripts\sipl.exe trace examples/valid_loop.sipl
+.\.venv\Scripts\python.exe -m sipl.cli trace examples/valid_loop.sipl
 ```
 
-The trace includes:
-
-- Before and after statement events
-- Step events
-- Condition evaluations
-- Variable changes
-- Completion event
-
-### Provide initial variables
+### Initial Variable Values
 
 ```powershell
-.\.venv\Scripts\sipl.exe run examples/example01.sipl --state X=2 --state Y=3
+.\.venv\Scripts\python.exe -m sipl.cli run examples/example01.sipl --state X=2 --state Y=3
 ```
 
-Expected result:
-
-```text
-R = 8
-X = 2
-Y = 0
-```
-
-### Set a step limit
+### JSON Output
 
 ```powershell
-.\.venv\Scripts\sipl.exe run examples/valid_loop.sipl --max-steps 100
+.\.venv\Scripts\python.exe -m sipl.cli run examples/interpreter_demo.sipl --json
 ```
 
-The default is 10000 execution steps.
+## VIS-01: CST Visualization
 
-## JSON Integration
+The concrete syntax tree is generated
+from the original SIPL grammar using Lark.
 
-The commands check, parse, run and trace support --json.
+CST includes grammar rules, keywords and punctuation.
 
-Example:
+It provides Text, JSON, DOT and SVG exports.
+
+### Text
 
 ```powershell
-.\.venv\Scripts\sipl.exe run examples/interpreter_demo.sipl --json
+.\.venv\Scripts\python.exe -m sipl.visualization examples/example01.sipl --format text
 ```
 
-Successful responses use this envelope:
+### All Formats
 
-```json
-{
-  "schema_version": "1.0",
-  "command": "run",
-  "ok": true,
-  "data": {
-    "state": {
-      "Result": 30,
-      "X": 0
-    },
-    "steps": 18
-  },
-  "error": null
-}
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization examples/example01.sipl --format all --output output/example01
 ```
 
-The same envelope is used for syntax and runtime errors.
+## VIS-02: AST Visualization
 
-Error responses contain:
+The AST is generated from the custom typed
+nodes implemented in CORE-02.
 
-- code
-- message
-- line
-- column
+Every AST node includes a SourceSpan.
 
-The `parse` command includes a typed AST containing
-node_type values and SourceSpan coordinates.
+The AST visualization shows:
 
-The `trace` command includes an ordered events array.
+- Node types
+- Attributes and operators
+- Parent-child relationships
+- Source positions
+- Field names on edges
 
-JSON is written to stdout. Diagnostic text for
-non-JSON errors is written to stderr.
+### Text AST
 
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | SIPL syntax error |
-| 2 | Invalid CLI arguments |
-| 3 | SIPL runtime error |
-| 4 | File reading error |
-
-Invalid CLI arguments use argparse diagnostics.
-The --json response envelope applies to successfully
-parsed CLI arguments.
-
-## SIPL Interpreter
-
-The interpreter supports:
-
-- Assignment
-- Sequential execution
-- If/then/else
-- While/do
-- Begin/end blocks
-- Skip
-- Integer arithmetic
-- Boolean conditions
-
-It uses explicit variable states and has a configurable
-execution step limit.
-
-## Python API
-
-```python
-from sipl.parser import parse_ast
-from sipl.interpreter import run_source
-
-program = parse_ast("begin X := 5 end")
-result = run_source("begin X := 5 end")
-
-print(type(program).__name__)
-print(result.state)
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format text
 ```
 
-Expected output:
+### JSON AST
 
-```text
-Program
-{'X': 5}
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format json
 ```
 
-## Examples
+### DOT AST
 
-Valid SIPL programs:
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format dot --output output/example01.ast.dot
+```
 
-- examples/example01.sipl
-- examples/valid_condition.sipl
-- examples/valid_loop.sipl
-- examples/interpreter_demo.sipl
+### SVG AST
 
-Invalid SIPL programs:
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format svg --output output/example01.ast.svg
+```
 
-- examples/invalid_assignment.sipl
-- examples/invalid_condition.sipl
+## CST vs AST Comparison
+
+VIS-02 provides an HTML page containing
+both concrete and abstract syntax trees.
+
+The page includes:
+
+- CST diagram
+- AST diagram
+- Number of CST nodes
+- Number of AST nodes
+- Number of CST terminal tokens
+- Original SIPL source code
+
+### Generate HTML Comparison
+
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format compare --output output/example01.comparison.html
+```
+
+### Generate Comparison JSON
+
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format compare-json
+```
+
+### Generate All VIS-02 Files
+
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format all --output output/ast_example01
+```
+
+The last command creates:
+
+- example01.ast.txt
+- example01.ast.json
+- example01.ast.dot
+- example01.ast.svg
+- example01.comparison.json
+- example01.comparison.html
+
+The comparison uses real CST and AST structures.
+
+No visualized program structure is hardcoded.
+
+## CST and AST Differences
+
+CST preserves the exact grammar structure,
+including terminal symbols such as begin,
+end, semicolons and assignment operators.
+
+AST preserves the semantic program structure
+using typed nodes such as Program, Assignment,
+WhileStatement, BinaryExpression and Variable.
+
+AST usually contains fewer nodes.
+
+Both representations preserve source positions.
 
 ## Testing
 
-Run all automated tests:
+Run all tests:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-Run coverage analysis:
+Run tests with coverage:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
 ```
 
-Verify interpreter coverage:
+Run VIS-02 tests:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_ast_visualization.py -v
+```
+
+Verify CORE-03 interpreter coverage:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter.runtime --cov-report=term-missing --cov-fail-under=80
 ```
-
-Integration tests launch the CLI as a separate
-Python process and validate commands, JSON output,
-diagnostics and exit codes.
 
 ## Documentation
 
@@ -346,19 +343,16 @@ diagnostics and exit codes.
 1. CORE-01: Formal grammar
 2. CORE-02: Typed AST
 3. CORE-03: Interpreter
-4. CORE-05: CLI and JSON output
-5. VIS-01: Parse tree visualization
-6. VIS-02: AST visualization
+4. CORE-05: CLI and JSON
+5. VIS-01: CST visualization
+6. VIS-02: AST visualization and comparison
 7. SEM-01: Formal semantic terms
 8. REL-02: GitHub Release
 
 ## Release
 
-The project follows Semantic Versioning.
-
-A tagged GitHub Release with release notes,
-CHANGELOG and build artifacts will be prepared
-for REL-02.
+A tagged GitHub Release with notes, CHANGELOG
+and artifacts will be prepared for REL-02.
 
 ## Course
 
@@ -368,5 +362,5 @@ SIPL Language Toolkit Coursework
 
 ## License
 
-MIT License (planned; license file will be added
-before the first release).
+MIT License (planned; license file will
+be added before the public release).

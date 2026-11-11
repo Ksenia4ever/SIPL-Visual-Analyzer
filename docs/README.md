@@ -2,322 +2,321 @@
 
 ## 1. Architecture
 
-SIPL Visual Analyzer uses a modular architecture.
-
-The current processing pipeline is:
+SIPL Visual Analyzer has a modular architecture.
 
 ```text
-SIPL source
-    |
-    v
-Lark grammar
-    |
-    v
-Concrete parse tree
-    |
-    v
-Typed AST
-    |
-    v
-SIPL interpreter
-    |
-    v
-ExecutionResult
+                   SIPL Source
+                        |
+                        v
+                   Lark Grammar
+                        |
+              +---------+---------+
+              |                   |
+              v                   v
+             CST                 AST
+              |                   |
+              v                   +---- Interpreter
+    VIS-01 Visualization          |
+              |                   v
+              |             VIS-02 Visualization
+              |                   |
+              +---------+---------+
+                        |
+                        v
+                 CST/AST Comparison
 ```
 
-The interpreter reuses the parser and AST from
-CORE-01 and CORE-02.
+The project uses the same formal grammar
+for all parsing and visualization operations.
 
-No separate parser is implemented inside the
-execution engine.
+## 2. CORE-01: Formal Grammar
 
-## 2. Formal Grammar
-
-The grammar is located in:
+Source grammar:
 
 `src/sipl/grammar.lark`
 
-Detailed language specification:
-
-`grammar/README.md`
-
-The supported language includes:
+The grammar supports:
 
 - Assignment
 - Sequential composition
-- If/then/else
-- While/do
-- Begin/end
+- Conditional statements
+- While loops
+- Blocks
 - Skip
-- Integer arithmetic
-- Boolean conditions
+- Arithmetic and Boolean expressions
 
-## 3. Syntax and AST
+## 3. CORE-02: Typed AST
 
-Syntax validation:
-
-`src/sipl/syntax.py`
-
-Typed AST models:
+AST data model:
 
 `src/sipl/ast.py`
 
-AST transformation:
+AST parser:
 
 `src/sipl/parser.py`
 
-Every AST node contains SourceSpan information
-for source position tracking.
+AST nodes are custom immutable dataclasses.
 
-## 4. Interpreter
+Every node includes a SourceSpan.
 
-The interpreter is implemented in:
+## 4. CORE-03: Interpreter
+
+Implementation:
 
 `src/sipl/interpreter/runtime.py`
 
-Public API:
+The interpreter executes typed AST nodes.
 
-`src/sipl/interpreter/__init__.py`
+It supports variable state, arithmetic,
+conditions, loops and execution limits.
 
-Main classes:
+## 5. CORE-05: Command Line Interface
 
-- Interpreter
-- ExecutionResult
-- SIPLRuntimeError
-- UndefinedVariableError
-- StepLimitExceededError
+Implementation:
 
-Main functions:
+`src/sipl/cli.py`
 
-- run_source()
-- run_file()
-- run_ast()
+Commands:
 
-## 5. Execution State
+- check
+- parse
+- run
+- trace
 
-The interpreter uses a dictionary that maps
-variable names to integer values.
+The CLI provides text and JSON output
+and documented exit codes.
 
-Example:
+## 6. VIS-01: Concrete Syntax Tree
 
-```python
-{
-    "X": 5,
-    "Result": 10
-}
-```
+Implementation:
 
-An initial state may be supplied by the caller.
+`src/sipl/visualization/tree.py`
 
-Example:
+CLI entry point:
 
-```python
-from sipl.interpreter import run_source
+`src/sipl/visualization/__main__.py`
 
-source = "begin R := X * 2 end"
+CST is generated using Lark
+with keep_all_tokens=True.
 
-result = run_source(
-    source,
-    initial_state={"X": 5},
-)
+CST preserves:
 
-print(result.state)
-```
+- Grammar rules
+- Keywords
+- Punctuation
+- Operators
+- Literal terminals
+- Source positions
 
-Expected output:
+VIS-01 supports:
 
-```text
-{'X': 5, 'R': 10}
-```
+- Text
+- JSON
+- DOT
+- SVG
 
-Variables are not automatically initialized.
+## 7. VIS-02: Abstract Syntax Tree
 
-Reading an undefined variable raises
-UndefinedVariableError.
+Implementation:
 
-## 6. Statement Semantics
+`src/sipl/visualization/ast_tree.py`
 
-### Assignment
+CLI entry point:
 
-The expression is evaluated and its value is
-assigned to the specified variable.
+`src/sipl/visualization/ast_cli.py`
 
-### Sequence
+VIS-02 traverses the custom AST from CORE-02.
 
-Statements are executed from left to right.
+It does not use a new grammar or duplicate
+the original AST parser.
 
-### Conditional
+Each exported AST node contains:
 
-The Boolean condition determines which branch
-is executed.
+- id
+- kind
+- name
+- role
+- span
+- attributes
+- children
 
-### While
+Node IDs are assigned using preorder traversal.
 
-The condition is evaluated before every iteration.
+Each child has a role describing the original
+AST field from which it was obtained.
 
-When the condition becomes false, execution
-continues after the loop.
+Examples:
 
-### Block
+- body
+- condition
+- then_branch
+- else_branch
+- statements[0]
+- left
+- right
 
-A begin/end block executes its contained statements.
+## 8. AST Source Positions
 
-Blocks do not introduce a separate variable scope.
+SourceSpan contains:
 
-### Skip
+- start_line
+- start_column
+- end_line
+- end_column
+- start_pos
+- end_pos
 
-Skip performs no state modification.
+Line and column positions are 1-based.
 
-## 7. Arithmetic Expressions
+Character positions are 0-based,
+and end positions are exclusive.
 
-Supported operations:
+These positions are taken from CORE-02 AST nodes.
 
-- Addition
-- Subtraction
-- Multiplication
-- Unary minus
+## 9. AST Visualization Formats
 
-Arithmetic uses Python arbitrary-precision integers.
+### Text
 
-Division is not part of the base SIPL grammar.
+An indented representation of typed AST nodes.
 
-## 8. Boolean Conditions
+### JSON
 
-Supported operations:
+A structured representation suitable for
+automated analysis and integrations.
 
-- Equality
-- Greater-than
-- Logical OR
-- Logical NOT
+### DOT
 
-Logical OR uses short-circuit evaluation.
+A Graphviz directed graph.
 
-## 9. Step Limit
+Nodes display:
 
-The default execution limit is 10000 steps.
+- Class name
+- Source position
+- Scalar attributes
 
-A step is counted for:
+Edges display the field role.
 
-- Assignment
-- Skip
-- If condition evaluation
-- While condition evaluation
+### SVG
 
-The final false while check is also counted.
+A browser-compatible diagram generated
+from the DOT representation.
 
-Sequence and Block nodes are structural wrappers
-and do not consume an additional step.
+## 10. CST/AST Comparison
 
-When the limit is exceeded, the interpreter raises
-StepLimitExceededError.
+VIS-02 provides two comparison formats:
 
-Example:
+- JSON
+- HTML
 
-```python
-from sipl.interpreter import run_source
+Comparison JSON contains:
 
-run_source(
-    "begin X := 1; while X > 0 do skip end",
-    max_steps=10,
-)
-```
+- schema_version
+- summary
+- ast
+- cst
 
-The interpreter stops execution rather than
-continuing indefinitely.
+The summary contains:
 
-## 10. Error Handling
+- ast_nodes
+- cst_nodes
+- cst_rule_nodes
+- cst_token_nodes
+- ast_node_types
 
-Syntax errors:
+The HTML comparison displays CST and AST
+side by side with embedded SVG diagrams.
 
-SIPLSyntaxError
+It also includes:
 
-Runtime errors:
+- Node counts
+- Terminal count
+- Original SIPL program
 
-SIPLRuntimeError
+The HTML file is self-contained and
+can be opened locally in a web browser.
 
-Specialized runtime errors:
+## 11. Meaning of the Comparison
 
-- UndefinedVariableError
-- StepLimitExceededError
+CST describes how the source code follows
+the formal grammar.
 
-Runtime errors contain the corresponding SourceSpan
-and a human-readable position.
+AST describes the program structure
+without unnecessary syntactic symbols.
 
-When execution raises an error, no successful
-ExecutionResult is returned.
+For example, CST contains terminal nodes
+for begin, end, semicolons and assignment.
 
-## 11. ExecutionResult
+AST represents these constructs through
+typed nodes such as Sequence and Assignment.
 
-The result contains:
+Both visualizations are generated from
+the same input program.
 
-- state: final variable values
-- steps: number of execution steps
+## 12. AST CLI
 
-Example:
-
-```python
-from sipl.interpreter import run_source
-
-result = run_source("begin X := 5 end")
-
-print(result.state)
-print(result.steps)
-```
-
-Expected output:
-
-```text
-{'X': 5}
-1
-```
-
-## 12. Testing
-
-Tests are located in:
-
-- tests/test_cli.py
-- tests/test_syntax.py
-- tests/test_parser.py
-- tests/test_interpreter.py
-
-Run the complete test suite:
+Show help:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -v
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli --help
 ```
 
-Check interpreter coverage:
+Export all formats:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_interpreter.py --cov=sipl.interpreter --cov-report=term-missing --cov-fail-under=80
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format all --output output/ast_example01
 ```
 
-CORE-03 requires at least 80% coverage
-of the interpreter implementation.
+Compare CST and AST:
 
-## 13. Current Limitations
+```powershell
+.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format compare --output output/example01.comparison.html
+```
 
-The current interpreter supports the basic
-SIPL language from the course.
+## 13. Exit Codes
 
-Not implemented yet:
+VIS-02 CLI returns:
 
-- Full CLI run/check/trace commands
-- Structured JSON results
-- Execution trace visualization
-- Parse tree and AST visualization
-- Formal semantic terms
-- Recursive function extensions
+- 0: Success
+- 1: SIPL syntax error
+- 2: Invalid command arguments
+- 4: File system error
+- 5: Graphviz or visualization error
 
-These capabilities belong to later stages
-or additional modules.
+## 14. Tests
 
-## 14. Planned Integration
+VIS-02 tests:
 
-The existing interpreter API will be reused by:
+`tests/test_ast_visualization.py`
 
-- CORE-05: CLI and JSON interface
-- VIS modules: visualization
-- SEM-01: semantic analysis
+The tests verify:
 
-This prevents duplication of the execution engine.
+- AST node types
+- Parent-child structure
+- Operator attributes
+- Source positions
+- Deterministic node IDs
+- Text export
+- JSON export
+- DOT export
+- SVG generation
+- CST/AST comparison statistics
+- HTML generation
+- HTML escaping
+- Command-line execution
+- Invalid SIPL programs
+- Missing files
+- Complete export generation
+
+Run:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_ast_visualization.py -v
+```
+
+## 15. Planned Modules
+
+SEM-01 will generate formal semantic terms
+from typed AST nodes.
+
+REL-02 will produce a tagged public release
+with supporting documentation and artifacts.
