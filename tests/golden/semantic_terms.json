@@ -1,0 +1,62 @@
+[
+  {
+    "name": "skip",
+    "source": "begin skip end",
+    "expected": "id"
+  },
+  {
+    "name": "assignment",
+    "source": "begin X := 5 end",
+    "expected": "AS^X(5̅)"
+  },
+  {
+    "name": "arithmetic_precedence",
+    "source": "begin X := 2 + 3 * 4 end",
+    "expected": "AS^X(S²(add, 2̅, S²(mult, 3̅, 4̅)))"
+  },
+  {
+    "name": "subtraction",
+    "source": "begin X := 8 - 3 end",
+    "expected": "AS^X(S²(sub, 8̅, 3̅))"
+  },
+  {
+    "name": "sequence",
+    "source": "begin X := 1; Y := X + 2 end",
+    "expected": "AS^X(1̅) · AS^Y(S²(add, X⇒, 2̅))"
+  },
+  {
+    "name": "if_else",
+    "source": "begin if X > 0 then Y := 1 else skip end",
+    "expected": "IF(S²(gr, X⇒, 0̅), AS^Y(1̅), id)"
+  },
+  {
+    "name": "while",
+    "source": "begin while X > 0 do X := X - 1 end",
+    "expected": "WH(S²(gr, X⇒, 0̅), AS^X(S²(sub, X⇒, 1̅)))"
+  },
+  {
+    "name": "equality",
+    "source": "begin if X = 2 then skip else skip end",
+    "expected": "IF(S²(eq, X⇒, 2̅), id, id)"
+  },
+  {
+    "name": "not_or",
+    "source": "begin if ¬ (X = 0 ∨ Y > 2) then skip else X := 3 end",
+    "expected": "IF(S¹(neg, S²(or, S²(eq, X⇒, 0̅), S²(gr, Y⇒, 2̅))), id, AS^X(3̅))"
+  },
+  {
+    "name": "unary_minus_extension",
+    "source": "begin X := -(Y + 3) end",
+    "expected": "AS^X(S¹(uminus, S²(add, Y⇒, 3̅)))"
+  },
+  {
+    "name": "nested_block",
+    "source": "begin begin skip; X := 2 end end",
+    "expected": "id · AS^X(2̅)"
+  },
+  {
+    "name": "course_power_example",
+    "source": "begin R := 1; while Y > 0 do begin R := R * X; Y := Y - 1 end end",
+    "expected": "AS^R(1̅) · WH(S²(gr, Y⇒, 0̅), AS^R(S²(mult, R⇒, X⇒)) · AS^Y(S²(sub, Y⇒, 1̅)))"
+  }
+]

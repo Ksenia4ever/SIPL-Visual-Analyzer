@@ -2,321 +2,289 @@
 
 ## 1. Architecture
 
-SIPL Visual Analyzer has a modular architecture.
+The project has the following processing pipeline:
 
 ```text
-                   SIPL Source
-                        |
-                        v
-                   Lark Grammar
-                        |
-              +---------+---------+
-              |                   |
-              v                   v
-             CST                 AST
-              |                   |
-              v                   +---- Interpreter
-    VIS-01 Visualization          |
-              |                   v
-              |             VIS-02 Visualization
-              |                   |
-              +---------+---------+
-                        |
-                        v
-                 CST/AST Comparison
+SIPL source
+    |
+    v
+Lark grammar
+    |
+    +------------------+
+    |                  |
+    v                  v
+   CST             Typed AST
+    |                  |
+    v                  +---- Interpreter
+VIS-01                 |
+    |                  +---- VIS-02
+    |                  |
+    |                  +---- SEM-01
+    |                           |
+    v                           v
+CST diagrams               Semantic terms
 ```
 
-The project uses the same formal grammar
-for all parsing and visualization operations.
+## 2. Completed Core Modules
 
-## 2. CORE-01: Formal Grammar
+### CORE-01
 
-Source grammar:
+Formal SIPL grammar and syntax validation.
 
-`src/sipl/grammar.lark`
+### CORE-02
 
-The grammar supports:
+Typed AST with source positions.
 
-- Assignment
-- Sequential composition
-- Conditional statements
-- While loops
-- Blocks
-- Skip
-- Arithmetic and Boolean expressions
+### CORE-03
 
-## 3. CORE-02: Typed AST
+Interpreter for the base SIPL language.
 
-AST data model:
+### CORE-05
 
-`src/sipl/ast.py`
+Command-line interface with check, parse,
+run, trace and JSON output.
 
-AST parser:
+## 3. Visualization Modules
 
-`src/sipl/parser.py`
+### VIS-01
 
-AST nodes are custom immutable dataclasses.
+Concrete syntax-tree visualization using
+the original Lark grammar.
 
-Every node includes a SourceSpan.
+Supported formats:
 
-## 4. CORE-03: Interpreter
-
-Implementation:
-
-`src/sipl/interpreter/runtime.py`
-
-The interpreter executes typed AST nodes.
-
-It supports variable state, arithmetic,
-conditions, loops and execution limits.
-
-## 5. CORE-05: Command Line Interface
-
-Implementation:
-
-`src/sipl/cli.py`
-
-Commands:
-
-- check
-- parse
-- run
-- trace
-
-The CLI provides text and JSON output
-and documented exit codes.
-
-## 6. VIS-01: Concrete Syntax Tree
-
-Implementation:
-
-`src/sipl/visualization/tree.py`
-
-CLI entry point:
-
-`src/sipl/visualization/__main__.py`
-
-CST is generated using Lark
-with keep_all_tokens=True.
-
-CST preserves:
-
-- Grammar rules
-- Keywords
-- Punctuation
-- Operators
-- Literal terminals
-- Source positions
-
-VIS-01 supports:
-
-- Text
+- TXT
 - JSON
 - DOT
 - SVG
 
-## 7. VIS-02: Abstract Syntax Tree
+### VIS-02
+
+Abstract syntax-tree visualization using
+the custom AST data model.
+
+Includes a side-by-side HTML comparison
+of CST and AST.
+
+## 4. SEM-01: Formal Semantics
 
 Implementation:
 
-`src/sipl/visualization/ast_tree.py`
+`src/sipl/semantics/terms.py`
 
-CLI entry point:
+Command-line entry point:
 
-`src/sipl/visualization/ast_cli.py`
+`src/sipl/semantics/__main__.py`
 
-VIS-02 traverses the custom AST from CORE-02.
+SEM-01 constructs formal semantic terms
+recursively from typed AST nodes.
 
-It does not use a new grammar or duplicate
-the original AST parser.
+The notation follows the practical handbook
+for the Theory of Programming course.
 
-Each exported AST node contains:
+## 5. Semantic Transformation Rules
 
-- id
-- kind
-- name
-- role
+Program:
+
+sem_P(begin S end) = sem_S(S)
+
+Assignment:
+
+sem_S(X := a) = AS^X(sem_A(a))
+
+Sequence:
+
+sem_S(S1; S2) = sem_S(S1) · sem_S(S2)
+
+Conditional:
+
+sem_S(if b then S1 else S2)
+    = IF(sem_B(b), sem_S(S1), sem_S(S2))
+
+While loop:
+
+sem_S(while b do S)
+    = WH(sem_B(b), sem_S(S))
+
+Block:
+
+sem_S(begin S end) = sem_S(S)
+
+Skip:
+
+sem_S(skip) = id
+
+Arithmetic:
+
+sem_A(a1 + a2)
+    = S²(add, sem_A(a1), sem_A(a2))
+
+sem_A(a1 - a2)
+    = S²(sub, sem_A(a1), sem_A(a2))
+
+sem_A(a1 * a2)
+    = S²(mult, sem_A(a1), sem_A(a2))
+
+Comparison:
+
+sem_B(a1 = a2)
+    = S²(eq, sem_A(a1), sem_A(a2))
+
+sem_B(a1 > a2)
+    = S²(gr, sem_A(a1), sem_A(a2))
+
+Boolean operators:
+
+sem_B(b1 ∨ b2)
+    = S²(or, sem_B(b1), sem_B(b2))
+
+sem_B(¬b)
+    = S¹(neg, sem_B(b))
+
+Constants and variables are represented
+as constant functions and dereferencing functions.
+
+Unary arithmetic minus is implemented as
+S¹(uminus, sem_A(a)), a documented extension.
+
+## 6. SemanticTerm Structure
+
+Each semantic term contains:
+
+- symbol
+- arguments
+- value
 - span
-- attributes
-- children
 
-Node IDs are assigned using preorder traversal.
+The node is immutable.
 
-Each child has a role describing the original
-AST field from which it was obtained.
+Nested terms are stored recursively.
 
-Examples:
+SourceSpan preserves the relationship
+between semantic terms and AST nodes.
 
-- body
-- condition
-- then_branch
-- else_branch
-- statements[0]
-- left
-- right
+## 7. Text Representation
 
-## 8. AST Source Positions
+The formatting module supports:
 
-SourceSpan contains:
+- AS^X
+- S²
+- S¹
+- IF
+- WH
+- id
+- Sequential composition ·
 
-- start_line
-- start_column
-- end_line
-- end_column
-- start_pos
-- end_pos
+Constant functions use an overlined
+numeric representation.
 
-Line and column positions are 1-based.
+Variable dereferencing uses the ⇒ symbol.
 
-Character positions are 0-based,
-and end positions are exclusive.
+## 8. JSON Representation
 
-These positions are taken from CORE-02 AST nodes.
-
-## 9. AST Visualization Formats
-
-### Text
-
-An indented representation of typed AST nodes.
-
-### JSON
-
-A structured representation suitable for
-automated analysis and integrations.
-
-### DOT
-
-A Graphviz directed graph.
-
-Nodes display:
-
-- Class name
-- Source position
-- Scalar attributes
-
-Edges display the field role.
-
-### SVG
-
-A browser-compatible diagram generated
-from the DOT representation.
-
-## 10. CST/AST Comparison
-
-VIS-02 provides two comparison formats:
-
-- JSON
-- HTML
-
-Comparison JSON contains:
+JSON output contains:
 
 - schema_version
-- summary
-- ast
-- cst
+- notation
+- term
+- structure
 
-The summary contains:
+The structure is recursively serialized
+from SemanticTerm objects.
 
-- ast_nodes
-- cst_nodes
-- cst_rule_nodes
-- cst_token_nodes
-- ast_node_types
+Every node contains a source span when
+it originates from an AST node.
 
-The HTML comparison displays CST and AST
-side by side with embedded SVG diagrams.
+## 9. Golden Tests
 
-It also includes:
+Golden test data:
 
-- Node counts
-- Terminal count
-- Original SIPL program
+`tests/golden/semantic_terms.json`
 
-The HTML file is self-contained and
-can be opened locally in a web browser.
+Test module:
 
-## 11. Meaning of the Comparison
+`tests/test_semantics.py`
 
-CST describes how the source code follows
-the formal grammar.
+The tests compare actual generated terms
+with predetermined expected representations.
 
-AST describes the program structure
-without unnecessary syntactic symbols.
+The examples cover all base SIPL constructs,
+as well as documented unary-minus support.
 
-For example, CST contains terminal nodes
-for begin, end, semicolons and assignment.
+The example from Practical Work 2
+is included in the golden test suite.
 
-AST represents these constructs through
-typed nodes such as Sequence and Assignment.
-
-Both visualizations are generated from
-the same input program.
-
-## 12. AST CLI
+## 10. SEM-01 Command Line
 
 Show help:
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli --help
+.\.venv\Scripts\python.exe -m sipl.semantics --help
 ```
 
-Export all formats:
+Generate a term:
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format all --output output/ast_example01
+.\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl
 ```
 
-Compare CST and AST:
+Generate JSON:
 
 ```powershell
-.\.venv\Scripts\python.exe -m sipl.visualization.ast_cli examples/example01.sipl --format compare --output output/example01.comparison.html
+.\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl --format json
 ```
 
-## 13. Exit Codes
+Save a term:
 
-VIS-02 CLI returns:
+```powershell
+.\.venv\Scripts\python.exe -m sipl.semantics examples/example01.sipl --output output/semantic.txt
+```
+
+Return codes:
 
 - 0: Success
-- 1: SIPL syntax error
-- 2: Invalid command arguments
-- 4: File system error
-- 5: Graphviz or visualization error
+- 1: Syntax error
+- 2: Invalid CLI arguments
+- 4: File error
+- 5: Semantic construction error
 
-## 14. Tests
+## 11. Scope
 
-VIS-02 tests:
+SEM-01 generates formal terms and does
+not evaluate them on an initial state.
 
-`tests/test_ast_visualization.py`
+Evaluation of semantic terms is a separate
+coursework task.
 
-The tests verify:
+## 12. Verification
 
-- AST node types
-- Parent-child structure
-- Operator attributes
-- Source positions
-- Deterministic node IDs
-- Text export
-- JSON export
-- DOT export
-- SVG generation
-- CST/AST comparison statistics
-- HTML generation
-- HTML escaping
-- Command-line execution
-- Invalid SIPL programs
-- Missing files
-- Complete export generation
-
-Run:
+Run semantic tests:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_ast_visualization.py -v
+.\.venv\Scripts\python.exe -m pytest tests/test_semantics.py -v
 ```
 
-## 15. Planned Modules
+Run all tests:
 
-SEM-01 will generate formal semantic terms
-from typed AST nodes.
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
 
-REL-02 will produce a tagged public release
-with supporting documentation and artifacts.
+Check coverage:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest --cov=sipl --cov-report=term-missing
+```
+
+## 13. References
+
+O. V. Shyshatska, A. V. Kryvolap,
+A. V. Shyshatskyi.
+
+Theory of Programming. Practical Handbook, 2024.
+
+Practical Work 2, pages 13–18.
+
+M. S. Nikitchenko.
+
+Theory of Programming, 2020.
